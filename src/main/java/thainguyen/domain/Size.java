@@ -1,5 +1,6 @@
 package thainguyen.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -21,9 +22,11 @@ public class Size {
     private Long version;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
     private Brand brand;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
     private Category category;
 
     @Enumerated(EnumType.STRING)

@@ -28,9 +28,12 @@ public class Product {
     private Long version;
 
     @ManyToOne
-    private @NotNull Category category;
+    @NotNull
+    @JsonIgnore
+    private Category category;
 
     @ManyToOne
+    @JsonIgnore
     private @NotNull Brand brand;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "product")

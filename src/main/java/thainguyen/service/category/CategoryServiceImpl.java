@@ -30,13 +30,6 @@ public class CategoryServiceImpl extends GenericServiceImpl<Category> implements
         return repo.findById(id).map(category -> {
             categoryUpdate.setVersion(category.getVersion());
             categoryUpdate.setId(id);
-            if (categoryUpdate.getParent() != null) {
-                Optional<Category> categoryOpt = repo.findById(categoryUpdate.getParent().getId());
-                categoryOpt.ifPresent(categoryUpdate::setParent);
-                if (categoryOpt.isEmpty()) {
-                    return null; // break
-                }
-            }
             return repo.save(categoryUpdate);
         }).orElseGet(() -> null);
     }
@@ -55,11 +48,7 @@ public class CategoryServiceImpl extends GenericServiceImpl<Category> implements
                 category.setDescription(categoryPatch.getDescription());
             }
             if (categoryPatch.getParent() != null) {
-                Optional<Category> categoryOpt = repo.findById(categoryPatch.getParent().getId());
-                categoryOpt.ifPresent(category::setParent);
-                if (categoryOpt.isEmpty()) {
-                    return null; // break
-                }
+                category.setParent(categoryPatch.getParent());
             }
             return repo.save(category);
         }).orElseGet(() -> null);

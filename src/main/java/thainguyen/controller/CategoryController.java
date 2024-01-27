@@ -60,6 +60,11 @@ public class CategoryController {
     @PutMapping(value = "/{id}", consumes = "application/json")
     private ResponseEntity<Category> putCategory(@PathVariable Long id,
                                                  @RequestBody Category category) {
+        category = getParent(category);
+        if (category == null) {
+            return ResponseEntity.unprocessableEntity().build();
+        }
+
         Category updatedCategory = service.updateByPut(id, category);
         if (updatedCategory != null) {
             return ResponseEntity.ok(updatedCategory);
@@ -69,10 +74,29 @@ public class CategoryController {
 
     @PatchMapping(value = "/{id}", consumes = "application/json")
     private ResponseEntity<Category> patchCategory(@PathVariable Long id, @RequestBody Category category) {
+
+        category = getParent(category);
+        if (category == null) {
+            return ResponseEntity.unprocessableEntity().build();
+        }
+
         Category updatedCategory = service.updateByPatch(id, category);
         if (updatedCategory != null) {
             return ResponseEntity.ok(updatedCategory);
         }
         return ResponseEntity.notFound().build();
+    }
+
+    private Category getParent(Category category) {
+        if (category.getParent() != null) {
+            Optional<Category> categoryOpt = service.findById(category.getParent().getId());
+            if (categoryOpt.isPresent()) {
+                category.setParent(categoryOpt.get());
+            }
+            else {
+                return null;
+            }
+        }
+        return category;
     }
 }

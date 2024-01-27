@@ -27,13 +27,13 @@ public class DetailProduct {
     private @NotNull String name;
 
     @ManyToOne
-    private Size size;
+    private @NotNull Size size;
 
     @ManyToOne
-    private Product product;
+    private @NotNull Product product;
 
-    private Price price;
-    private Double weight;
+    private @NotNull Price price;
+    private @NotNull  Double weight;
     private LocalDateTime createdAt;
     @UpdateTimestamp
     private LocalDateTime updatedAt;

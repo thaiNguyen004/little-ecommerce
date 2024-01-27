@@ -26,7 +26,7 @@ public class Brand {
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "brand")
     @JsonIgnore
-    private Collection<Product> products = new ArrayList<>();
+    private List<Product> products = new ArrayList<>();
 
     private @NotNull String name;
     private String logo;
