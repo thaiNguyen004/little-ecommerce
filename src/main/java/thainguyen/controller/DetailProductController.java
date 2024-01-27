@@ -49,12 +49,12 @@ public class DetailProductController {
     @ResponseBody
     private ResponseEntity<Void> createDeatailProduct(@RequestBody DetailProduct detailProduct,
                                              UriComponentsBuilder ucb) {
-        detailProduct = givingProductAndSizeToDetailProduct(detailProduct);
-        if (detailProduct == null) {
-            return ResponseEntity.notFound().build();
+        if (detailProduct.getSize() == null || detailProduct.getProduct() == null) {
+            return ResponseEntity.badRequest().build();
         }
 
-        if (detailProduct.getSize() == null || detailProduct.getProduct() == null) {
+        detailProduct = givingProductAndSizeToDetailProduct(detailProduct);
+        if (detailProduct == null) {
             return ResponseEntity.unprocessableEntity().build();
         }
 
@@ -69,23 +69,32 @@ public class DetailProductController {
 
     @PutMapping(value = "/{id}", consumes = "application/json")
     private ResponseEntity<DetailProduct> putSize(@PathVariable Long id, @RequestBody DetailProduct detailProduct) {
+        if (detailProduct.getSize() == null || detailProduct.getProduct() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
         detailProduct = givingProductAndSizeToDetailProduct(detailProduct);
         if (detailProduct == null) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.unprocessableEntity().build();
         }
         detailProduct = detailProductService.updateByPut(id, detailProduct);
         if (detailProduct == null) {
             return ResponseEntity.notFound().build();
         }
+        System.out.println(detailProduct);
+
         return ResponseEntity.ok(detailProduct);
     }
 
     @PatchMapping(value = "/{id}", consumes = "application/json")
     private ResponseEntity<DetailProduct> patchSize(@PathVariable Long id, @RequestBody DetailProduct detailProduct) {
+
         detailProduct = givingProductAndSizeToDetailProduct(detailProduct);
+
         if (detailProduct == null) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.unprocessableEntity().build();
         }
+
         detailProduct = detailProductService.updateByPatch(id, detailProduct);
         if (detailProduct == null) {
             return ResponseEntity.notFound().build();
@@ -119,7 +128,6 @@ public class DetailProductController {
                 detailProduct.setSize(sizeOpt.get());
             }
         }
-
         return detailProduct;
     }
 }

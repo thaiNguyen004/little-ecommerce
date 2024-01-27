@@ -285,15 +285,4 @@ public class BrandTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
-
-
-
-
-
-
-
-
-
-
-
 }

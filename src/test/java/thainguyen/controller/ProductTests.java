@@ -257,10 +257,10 @@ public class ProductTests {
     }
 
 
-    // PUT Product: Bad request due when put product missing brand or category
+    // PUT Product: Bad request due when put product missing field required
     @Test
     @DirtiesContext
-    void attemptPutProductBut() {
+    void attemptPutProductButFieldsRequiredNotNull() {
         Product product = new Product();
         product.setName("Demo name product");
         product.setDescription("Demo description product");
@@ -270,6 +270,29 @@ public class ProductTests {
                 restTemplate.withBasicAuth("employee", "password")
                         .exchange("/api/products/202", HttpMethod.PUT, request, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    // PUT Product: Unprocessable entity due when put product that brand or category not found
+    @Test
+    @DirtiesContext
+    void attemptPutProductBut() {
+        Product product = new Product();
+        product.setName("Demo name product");
+        Brand brand = new Brand();
+        brand.setId(999999L);
+        Category category = new Category();
+        category.setId(99999L);
+        product.setBrand(brand);
+        product.setCategory(category);
+        product.setBrand(brand);
+        product.setCategory(category);
+        product.setDescription("Demo description product");
+        HttpEntity<Product> request = new HttpEntity<>(product);
+
+        ResponseEntity<String> response =
+                restTemplate.withBasicAuth("employee", "password")
+                        .exchange("/api/products/202", HttpMethod.PUT, request, String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     /*PUT Product: Product with that id not found in database*/
@@ -388,7 +411,7 @@ public class ProductTests {
         assertThat(idBrandOfPatchReponse).isEqualTo(103);
     }
 
-    /*PATCH Product: Update Product unsuccess due id brand or id category not found*/
+    /*PATCH Product: Unprocessable entity due when put product that brand or category not found*/
     @Test
     @DirtiesContext
     void shouldNotChangeProductWhenAnyBrandOrCategoryNotExist() {

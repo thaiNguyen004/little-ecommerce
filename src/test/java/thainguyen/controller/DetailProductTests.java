@@ -233,7 +233,7 @@ public class DetailProductTests {
     }
 
 
-    /*PUT DetailProduct: Bad request due when put DetailProduct missing brand or category*/
+    /*PUT DetailProduct: Bad request due when put DetailProduct missing size or product*/
     @Test
     @DirtiesContext
     void attemptPutDetailProductButMissingInfo() {
@@ -373,7 +373,7 @@ public class DetailProductTests {
     }
 
 
-    /*PATCH DetailProduct: Update Brand of DetailProduct success*/
+    /*PATCH DetailProduct: Update Product of DetailProduct success*/
     @Test
     @DirtiesContext
     void updateProductOfDetailProduct() {
