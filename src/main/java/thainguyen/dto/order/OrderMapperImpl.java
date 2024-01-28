@@ -13,6 +13,7 @@ import thainguyen.service.detailproduct.DetailProductService;
 import thainguyen.service.discount.DiscountService;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Currency;
 import java.util.List;
 import java.util.Optional;
@@ -37,11 +38,12 @@ public class OrderMapperImpl implements OrderMapper {
         Order order = new Order();
         order.setAddress(orderDto.getAddress());
         List<Long> discountsDto = orderDto.getDiscounts();
-        if (discountsDto == null || discountsDto.isEmpty()) return null;
-        for (Long discountId : discountsDto) {
-            Optional<Discount> discountOpt = discountService.findById(discountId);
-            if (discountOpt.isEmpty()) return null;
-            order.addDiscount(discountOpt.get());
+        if (discountsDto != null && !discountsDto.isEmpty()) {
+            for (Long discountId : discountsDto) {
+                Optional<Discount> discountOpt = discountService.findById(discountId);
+                if (discountOpt.isEmpty()) return null;
+                order.addDiscount(discountOpt.get());
+            }
         }
         List<LineItemDto> lineItemDto =  orderDto.getLineItems();
         if (lineItemDto == null || lineItemDto.isEmpty()) return null;
@@ -66,9 +68,14 @@ public class OrderMapperImpl implements OrderMapper {
         Price price = dp.getPrice();
         BigDecimal value = price.getValue();
         BigDecimal quantity = BigDecimal.valueOf(lineItem.getQuantity());
-        lineItem.setTotalWeight(dp.getWeight() * quantity.doubleValue());
+        Double totalWeight = dp.getWeight() * quantity.doubleValue();
+        lineItem.setTotalWeight(
+                BigDecimal.valueOf(totalWeight).setScale(3, RoundingMode.HALF_UP)
+                        .doubleValue()
+        );
+
         lineItem.setTotalPrice(new Price(
-                value.multiply(quantity),
+                value.multiply(quantity).setScale(1, RoundingMode.HALF_UP),
                 Currency.getInstance("VND")
         ));
         return lineItem;
