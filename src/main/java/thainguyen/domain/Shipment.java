@@ -1,11 +1,12 @@
 package thainguyen.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import thainguyen.domain.converter.PriceConverter;
 import thainguyen.domain.valuetypes.Price;
 
 import java.util.HashSet;
@@ -23,23 +24,26 @@ public class Shipment {
     private Long id;
 
     @OneToOne(mappedBy = "shipment")
+    @JsonIgnore
     private Order order;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "shipment")
     private Set<Tracking> trackings = new HashSet<>();
 
     private @NotNull String labelCode;
-    @AttributeOverrides(value = {
-            @AttributeOverride(name = "value", column = @Column(name = "FEE_VALUE")),
-            @AttributeOverride(name = "currency", column = @Column(name = "FEE_CURRENCY"))
-    })
+
+    @Convert(converter = PriceConverter.class)
     private @NotNull Price fee;
-    @AttributeOverrides(value = {
-            @AttributeOverride(name = "value", column = @Column(name = "INSURANCE_VALUE")),
-            @AttributeOverride(name = "currency", column = @Column(name = "INSURANCE_CURRENCY"))
-    })
+
+    @Convert(converter = PriceConverter.class)
     private @NotNull Price insuranceFee;
+
     private @NotNull String estimatedPickTime;
     private @NotNull String estimatedDeliverTime;
     private @NotNull Integer trackingID;
+
+    /*Custom constructor*/
+    public Shipment(Order order) {
+        this.order = order;
+    }
 }

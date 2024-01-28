@@ -33,7 +33,7 @@ public class DetailProduct {
     private @NotNull Product product;
 
     private @NotNull Price price;
-    private @NotNull  Double weight;
+    private @NotNull  Double weight;  // KG
     private LocalDateTime createdAt;
     @UpdateTimestamp
     private LocalDateTime updatedAt;

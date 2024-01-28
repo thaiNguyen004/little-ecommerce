@@ -24,17 +24,15 @@ public class Address {
     private @NotNull String district;
     private @NotNull String ward;
     private String detailAddress;
-    private @NotNull String hamlet;
 
     /*Custom constructor*/
     public Address(String phoneNumber, String province
-            , String district, String ward, String address, String hamlet) {
+            , String district, String ward, String address) {
         this.phoneNumber = phoneNumber;
         this.province = province;
         this.district = district;
         this.ward = ward;
         this.detailAddress = address;
-        this.hamlet = hamlet;
     }
 
 }

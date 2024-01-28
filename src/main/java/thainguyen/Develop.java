@@ -16,7 +16,7 @@ import java.util.Currency;
 @Configuration
 public class Develop {
 
-    @Bean
+//    @Bean
     public CommandLineRunner data (BrandRepository brandRepo,
                                    CategoryRepository categoryRepo,
                                    ProductRepository productRepo,
@@ -31,7 +31,7 @@ public class Develop {
         return args -> {
             User admin = new User("admin", encoder.encode("password"), "email@example.com"
                     , "Nguyen admin", "male", 19, "link avatar", "ADMIN");
-            Address adminAddress = new Address("0336514962", "Phú Thọ", "Hạ Hòa", "Yên Kỳ", "Khu 14", "Khác");
+            Address adminAddress = new Address("0336514962", "Phú Thọ", "Hạ Hòa", "Yên Kỳ", "Khu 14");
             admin.getAddresses().add(adminAddress);
             userRepo.save(admin);
             User employee = new User("employee", encoder.encode("password"), "nguyenntph33935@fpt.edu.com"
@@ -131,8 +131,7 @@ public class Develop {
                             , "Hà Nội"
                             , "Bắc Từ Liêm"
                             , "Cầu Diễn"
-                            , "Số 12"
-                            , ""));
+                            , "Số 12"));
             orderRepo.save(order1);
 
             LineItem lineItem1 = new LineItem(detailProduct1, 2);

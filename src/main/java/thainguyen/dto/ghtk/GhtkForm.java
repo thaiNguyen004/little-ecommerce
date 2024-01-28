@@ -6,29 +6,22 @@ import lombok.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * is_freeship: Integer - Freeship cho người nhận hàng.
- * Nếu bằng 1 COD sẽ chỉ thu người nhận hàng số tiền bằng pick_money,
- * nếu bằng 0 COD sẽ thu tiền người nhận số tiền bằng pick_money + phí ship của đơn hàng,
- * giá trị mặc định bằng 0
- * */
-
 @Data
 public class GhtkForm {
 
-    private List<GhtkProduct> products = new ArrayList<>();
-    private GhtkOrder order;
+    private List<GhtkProductForm> products = new ArrayList<>();
+    private GhtkOrderForm order;
 
     @Getter
     @Setter
     @NoArgsConstructor
-    public static class GhtkProduct {
+    public static class GhtkProductForm {
         private String name;
         private Double weight;
         private Integer quantity;
         private Long product_code;
 
-        public GhtkProduct(String name, Double weight, Integer quantity, Long product_code) {
+        public GhtkProductForm(String name, Double weight, Integer quantity, Long product_code) {
             this.name = name;
             this.weight = weight;
             this.quantity = quantity;
@@ -38,7 +31,7 @@ public class GhtkForm {
 
     @Getter
     @Setter
-    public static class GhtkOrder {
+    public static class GhtkOrderForm {
         private @NotNull String id;
         private @NotNull String pick_name;
         private @NotNull String pick_province;
@@ -55,7 +48,7 @@ public class GhtkForm {
         private String hamlet;
         private @NotNull String tel;
         private Integer is_freeship;
-        private @NotNull Integer pick_money; // Số tiền CoD. Nếu bằng 0 thì không thu tiền CoD. Tính theo VNĐ
+        private @NotNull Integer pick_money;
         private @NotNull Integer value;
 
     }
