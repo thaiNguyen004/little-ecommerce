@@ -2,6 +2,7 @@ package thainguyen.service.shipment;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.stereotype.Service;
+import thainguyen.controller.exception.GhtkCreateOrderFailedException;
 import thainguyen.domain.Order;
 import thainguyen.domain.Shipment;
 import thainguyen.service.generic.GenericService;
@@ -9,5 +10,5 @@ import thainguyen.service.generic.GenericService;
 @Service
 public interface ShipmentService extends GenericService<Shipment> {
 
-    Shipment createShipment(Order order) throws JsonProcessingException;
+    Shipment createShipment(Order order) throws JsonProcessingException, GhtkCreateOrderFailedException;
 }

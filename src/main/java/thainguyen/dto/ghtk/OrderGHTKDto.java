@@ -8,6 +8,7 @@ import lombok.Setter;
 public class OrderGHTKDto {
 
     private Boolean success;
+    private String message;
     private OrderResponseInfo order;
 
     @Getter

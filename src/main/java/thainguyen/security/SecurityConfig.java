@@ -81,9 +81,9 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.PUT, "/api/detailproducts/**").hasAnyRole("ADMIN", "EMPLOYEE")
                     .requestMatchers(HttpMethod.PATCH, "/api/detailproducts/**").hasAnyRole("ADMIN", "EMPLOYEE")
 
-                    .requestMatchers(HttpMethod.POST, "/api/orders/**").hasAnyRole("ADMIN", "EMPLOYEE")
-                    .requestMatchers(HttpMethod.PUT, "/api/orders/**").hasAnyRole("ADMIN", "EMPLOYEE")
-                    .requestMatchers(HttpMethod.PATCH, "/api/orders/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                    .requestMatchers(HttpMethod.POST, "/api/orders/**").hasAnyRole("ADMIN", "EMPLOYEE", "CUSTOMER")
+                    .requestMatchers(HttpMethod.PUT, "/api/orders/**").hasAnyRole("ADMIN", "EMPLOYEE", "CUSTOMER")
+                    .requestMatchers(HttpMethod.PATCH, "/api/orders/**").hasAnyRole("ADMIN", "EMPLOYEE", "CUSTOMER")
 
                     .anyRequest().permitAll())
                 .httpBasic(Customizer.withDefaults())

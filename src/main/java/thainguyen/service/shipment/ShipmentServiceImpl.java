@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import thainguyen.controller.exception.GhtkCreateOrderFailedException;
 import thainguyen.data.ShipmentRepository;
 import thainguyen.domain.*;
 import thainguyen.domain.valuetypes.Price;
@@ -36,8 +37,11 @@ public class ShipmentServiceImpl extends GenericServiceImpl<Shipment>
     }
 
     @Override
-    public Shipment createShipment(Order order) throws JsonProcessingException {
+    public Shipment createShipment(Order order) throws JsonProcessingException, GhtkCreateOrderFailedException {
         OrderGHTKDto responseFromGhtk = createOrderGhtk(order);
+        if (!responseFromGhtk.getSuccess()) {
+            throw new GhtkCreateOrderFailedException(responseFromGhtk.getMessage());
+        }
         Shipment shipment = new Shipment(order);
 
         /*Create Shipment*/
@@ -66,16 +70,13 @@ public class ShipmentServiceImpl extends GenericServiceImpl<Shipment>
         ObjectWriter ow = new ObjectMapper()
                 .writerWithDefaultPrettyPrinter();
         String json = ow.writeValueAsString(ghtkForm);
-        System.out.println(json);
         HttpHeaders headers = new HttpHeaders();
         headers.add("Token", Constants.TOKEN);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         HttpEntity<GhtkForm> request = new HttpEntity<>(ghtkForm, headers);
 
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
-        OrderGHTKDto response = restTemplate.postForObject(Constants.URI_GHTK_ORDER, request, OrderGHTKDto.class);
-
-        return response;
+        return restTemplate.postForObject(Constants.URI_GHTK_ORDER, request, OrderGHTKDto.class);
     }
 
     public List<GhtkForm.GhtkProductForm> transferLineItemsToListGhtkProductForm(List<LineItem> lineItems) {
@@ -102,7 +103,7 @@ public class ShipmentServiceImpl extends GenericServiceImpl<Shipment>
         Address addressOfAdmin = admin.getAddresses().get(0);
 
         GhtkForm.GhtkOrderForm ghtkOrderForm = new GhtkForm.GhtkOrderForm();
-        ghtkOrderForm.setId(order.getId().toString() + "q");
+        ghtkOrderForm.setId(order.getId().toString() + "m");
 
         // Customer info
         ghtkOrderForm.setName(customer.getFullname());
