@@ -37,7 +37,7 @@ public class Order {
     @JoinColumn(unique = true)
     private Address address;
 
-    @OneToOne(/*fetch = FetchType.LAZY, optional = false, */cascade = CascadeType.PERSIST)
+    @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(unique = true)
     private Shipment shipment;
 
