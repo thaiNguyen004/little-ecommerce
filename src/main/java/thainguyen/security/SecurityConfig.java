@@ -85,6 +85,10 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.PUT, "/api/orders/**").hasAnyRole("ADMIN", "EMPLOYEE", "CUSTOMER")
                     .requestMatchers(HttpMethod.PATCH, "/api/orders/**").hasAnyRole("ADMIN", "EMPLOYEE", "CUSTOMER")
 
+                    .requestMatchers(HttpMethod.POST, "/api/discounts/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                    .requestMatchers(HttpMethod.PUT, "/api/discounts/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                    .requestMatchers(HttpMethod.PATCH, "/api/discounts/**").hasAnyRole("ADMIN", "EMPLOYEE")
+
                     .anyRequest().permitAll())
                 .httpBasic(Customizer.withDefaults())
                 .headers(header -> header.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
