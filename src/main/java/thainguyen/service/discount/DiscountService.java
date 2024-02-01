@@ -4,5 +4,9 @@ import thainguyen.domain.Discount;
 import thainguyen.service.generic.GenericService;
 
 public interface DiscountService extends GenericService<Discount> {
+    Discount create(Discount discount);
 
+    Discount updateByPut(Long id, Discount discount);
+
+    Discount updateByPatch(Long id, Discount discount);
 }

@@ -23,6 +23,9 @@ public class Discount {
     @GeneratedValue(generator = SEQUENCE_GENERATOR)
     private Long id;
 
+    @Version
+    private Long version;
+
     @ManyToMany(mappedBy = "discounts")
     @JsonIgnore
     private Set<Order> order = new HashSet<>();
