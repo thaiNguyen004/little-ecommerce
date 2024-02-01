@@ -46,15 +46,14 @@ public class SizeController {
         return ResponseEntity.ok(sizes);
     }
 
-    @PostMapping(consumes = "application/json")
-    @ResponseBody
+    @PostMapping
     private ResponseEntity<Void> createSize(@RequestBody Size size, UriComponentsBuilder ucb) {
-        size = givingCategoryAndBrand(size);
-        if (size == null) {
-            return ResponseEntity.notFound().build();
+        if (size.getCategory() == null || size.getBrand() == null) {
+            return ResponseEntity.unprocessableEntity().build();
         }
 
-        if (size.getCategory() == null || size.getBrand() == null) {
+        size = givingCategoryAndBrand(size);
+        if (size == null) {
             return ResponseEntity.unprocessableEntity().build();
         }
 
@@ -65,14 +64,16 @@ public class SizeController {
         URI locationCreated = ucb.path("/api/sizes/{id}")
                 .buildAndExpand(size.getId()).toUri();
         return ResponseEntity.created(locationCreated).build();
-
     }
 
     @PutMapping(value = "/{id}", consumes = "application/json")
     private ResponseEntity<Size> putSize(@PathVariable Long id, @RequestBody Size size) {
+        if (size.getBrand() == null || size.getCategory() == null)
+            return ResponseEntity.badRequest().build();
+
         size = givingCategoryAndBrand(size);
         if (size == null) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.unprocessableEntity().build();
         }
         size = sizeService.updateByPut(id, size);
         if (size == null) {
@@ -84,6 +85,10 @@ public class SizeController {
     @PatchMapping(value = "/{id}", consumes = "application/json")
     private ResponseEntity<Size> patchSize(@PathVariable Long id, @RequestBody Size size) {
         size = givingCategoryAndBrand(size);
+        if (size == null) {
+            return ResponseEntity.unprocessableEntity().build();
+        }
+
         size = sizeService.updateByPatch(id, size);
         if (size == null) {
             return ResponseEntity.notFound().build();
