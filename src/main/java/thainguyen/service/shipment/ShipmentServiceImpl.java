@@ -103,7 +103,7 @@ public class ShipmentServiceImpl extends GenericServiceImpl<Shipment>
         Address addressOfAdmin = admin.getAddresses().get(0);
 
         GhtkForm.GhtkOrderForm ghtkOrderForm = new GhtkForm.GhtkOrderForm();
-        ghtkOrderForm.setId(order.getId().toString() + "m");
+        ghtkOrderForm.setId(order.getId().toString());
 
         // Customer info
         ghtkOrderForm.setName(customer.getFullname());
