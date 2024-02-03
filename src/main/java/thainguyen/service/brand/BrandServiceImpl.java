@@ -7,6 +7,8 @@ import thainguyen.data.BrandRepository;
 import thainguyen.domain.Brand;
 import thainguyen.service.generic.GenericServiceImpl;
 
+import java.sql.SQLIntegrityConstraintViolationException;
+
 @Service
 @Slf4j
 public class BrandServiceImpl extends GenericServiceImpl<Brand> implements BrandService{
@@ -19,7 +21,11 @@ public class BrandServiceImpl extends GenericServiceImpl<Brand> implements Brand
     }
 
     @Override
-    public Brand create(Brand brand) {
+    public Brand create(Brand brand) throws SQLIntegrityConstraintViolationException {
+        boolean isExist = repo.existsBrandsByName(brand.getName());
+        if (isExist) {
+            throw new SQLIntegrityConstraintViolationException("Brand with name = " + brand.getName() + "already existed");
+        }
         return repo.save(brand);
     }
 

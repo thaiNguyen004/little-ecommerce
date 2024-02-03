@@ -138,6 +138,23 @@ public class DiscountTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
+    /*POST Discount: Create Discount fail due percent > 100*/
+    @Test
+    void attemptCreateAnDiscountWhilePercentGreateThan100() {
+        Discount discount = new Discount("DEMOTESTCREATEDISCOUNT",
+                Discount.Type.PERCENTAGE, // info is null
+                Discount.Kind.FREESHIP,
+                101, 1000
+                , LocalDateTime.of(2024, 1, 14, 00, 00, 00)
+                , LocalDateTime.of(2024, 2, 14, 00, 00, 00));
+
+        ResponseEntity<Void> response = restTemplate
+                .withBasicAuth("employee", "password")
+                .postForEntity("/api/discounts", discount, Void.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+
 
     /*POST Discount: Unauthorized */
     @Test

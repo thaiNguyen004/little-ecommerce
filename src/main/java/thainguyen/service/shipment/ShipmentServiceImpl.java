@@ -1,14 +1,15 @@
 package thainguyen.service.shipment;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import jakarta.persistence.EntityManager;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import thainguyen.controller.exception.GhtkCreateOrderFailedException;
 import thainguyen.data.ShipmentRepository;
@@ -29,11 +30,14 @@ public class ShipmentServiceImpl extends GenericServiceImpl<Shipment>
     private final ShipmentRepository shipmentRepository;
     private final UserService userService;
     private final RestTemplate restTemplate = new RestTemplate();
+    private final ObjectMapper objectMapper;
 
-    public ShipmentServiceImpl(EntityManager em, ShipmentRepository shipmentRepository, UserService userService) {
+    public ShipmentServiceImpl(EntityManager em, ShipmentRepository shipmentRepository
+            , UserService userService, ObjectMapper objectMapper) {
         super(em, Shipment.class);
         this.shipmentRepository = shipmentRepository;
         this.userService = userService;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -75,8 +79,16 @@ public class ShipmentServiceImpl extends GenericServiceImpl<Shipment>
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         HttpEntity<GhtkForm> request = new HttpEntity<>(ghtkForm, headers);
 
-        restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
-        return restTemplate.postForObject(Constants.URI_GHTK_ORDER, request, OrderGHTKDto.class);
+//        restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+        OrderGHTKDto orderGHTKDto = null;
+        try {
+            orderGHTKDto = restTemplate.postForObject(Constants.URI_GHTK_ORDER, request, OrderGHTKDto.class);
+        } catch (HttpClientErrorException.UnprocessableEntity e) {
+            String responseBody = e.getResponseBodyAsString();
+            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            orderGHTKDto = objectMapper.readValue(responseBody, OrderGHTKDto.class);
+        }
+        return orderGHTKDto;
     }
 
     public List<GhtkForm.GhtkProductForm> transferLineItemsToListGhtkProductForm(List<LineItem> lineItems) {

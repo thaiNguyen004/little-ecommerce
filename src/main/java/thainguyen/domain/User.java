@@ -17,7 +17,7 @@ import java.util.*;
 
 import static thainguyen.domain.Constants.SEQUENCE_GENERATOR;
 
-@Entity
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,6 +25,7 @@ import static thainguyen.domain.Constants.SEQUENCE_GENERATOR;
         @Index(name = "IDX_USERNAME", columnList = "username"),
         @Index(name = "IDX_USERNAME_EMAIL", columnList = "username, email")
 })
+@Entity
 public class User implements UserDetails {
 
     @Id
