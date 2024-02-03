@@ -34,7 +34,6 @@ public class Order {
     private List<LineItem> lineItems = new ArrayList<>();
 
     @OneToOne(fetch = FetchType.EAGER, optional = false, cascade = CascadeType.PERSIST)
-    @JoinColumn(unique = true)
     private Address address;
 
     @OneToOne(cascade = CascadeType.PERSIST)

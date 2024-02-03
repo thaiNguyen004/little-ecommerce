@@ -2,6 +2,7 @@ package thainguyen.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,7 +29,11 @@ public class Brand {
     @JsonIgnore
     private List<Product> products = new ArrayList<>();
 
-    private @NotNull String name;
+    @NotBlank(message = "Name attribute must not be null and empty!")
+    @Column(unique = true)
+    private String name;
+
+    @NotBlank(message = "Logo attribute must not be null or empty!")
     private String logo;
 
     /*Custom constructor*/
