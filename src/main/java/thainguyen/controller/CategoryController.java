@@ -1,102 +1,90 @@
 package thainguyen.controller;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
+import thainguyen.controller.conf.ResponseComponent;
 import thainguyen.domain.Category;
 import thainguyen.service.category.CategoryService;
+import thainguyen.utilities.ObjectMapperUtil;
+import thainguyen.utilities.ValidateUtil;
 
 import java.net.URI;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/api/categories", produces = "application/json")
 @Slf4j
+@AllArgsConstructor
 public class CategoryController {
 
     private final CategoryService service;
-
-    public CategoryController(CategoryService service) {
-        this.service = service;
-    }
+    private final ValidateUtil validateUtil;
+    private final ObjectMapperUtil objectMapperUtil;
 
     @GetMapping(value = "/{id}")
-    private ResponseEntity<Category> findById(@PathVariable Long id) {
-        Optional<Category> categoryOptional = service.findById(id);
-        return categoryOptional.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    private ResponseEntity<ResponseComponent<Category>> findById(@PathVariable Long id) {
+        ResponseComponent<Category> response = ResponseComponent
+                .<Category>builder()
+                .success(true)
+                .status(HttpStatus.OK)
+                .data(service.findById(id))
+                .build();
+        return new ResponseEntity<>(response, response.getStatus());
     }
 
     @GetMapping
-    private ResponseEntity<List<Category>> findAll() {
-        List<Category> Categorys = service.findAll();
-        if (Categorys.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(Categorys);
+    private ResponseEntity<ResponseComponent<List<Category>>> findAll() {
+        ResponseComponent<List<Category>> response = ResponseComponent.<List<Category>>builder()
+                .success(true)
+                .status(HttpStatus.OK)
+                .data(service.findAll())
+                .build();
+        return new ResponseEntity<>(response, response.getStatus());
     }
 
     @PostMapping(consumes = "application/json")
     @ResponseBody
-    private ResponseEntity<Void> createCategory(@RequestBody Category category
-            , UriComponentsBuilder ucb) {
+    private ResponseEntity<ResponseComponent<Void>> createCategory(@RequestBody @Valid Category category
+            , UriComponentsBuilder ucb) throws SQLIntegrityConstraintViolationException, IllegalArgumentException {
 
-        Category parent = category.getParent();
-        if (parent != null) {
-            Optional<Category> parentOpt = service.findById(parent.getId());
-            parentOpt.ifPresent(category::setParent);
-
-            if (parentOpt.isEmpty()) {
-                return ResponseEntity.unprocessableEntity().build();
-            }
-        }
         Category createdCategory = service.create(category);
         URI locationOfNewCategory = ucb.path("/api/categories/{id}")
                 .buildAndExpand(createdCategory.getId()).toUri();
-        return ResponseEntity.created(locationOfNewCategory).build();
+        ResponseComponent<Void> response = ResponseComponent
+                .<Void>builder()
+                .success(true)
+                .status(HttpStatus.CREATED)
+                .message("Create category success")
+                .build();
+        return ResponseEntity.created(locationOfNewCategory)
+                .body(response);
     }
 
     @PutMapping(value = "/{id}", consumes = "application/json")
-    private ResponseEntity<Category> putCategory(@PathVariable Long id,
-                                                 @RequestBody Category category) {
-        category = getParent(category);
-        if (category == null) {
-            return ResponseEntity.unprocessableEntity().build();
-        }
+    private ResponseEntity<ResponseComponent<Category>> patchCategory(@PathVariable Long id,
+                                                                      @RequestBody Map<String, Object> categoryMap)
+            throws MethodArgumentNotValidException {
 
-        Category updatedCategory = service.updateByPut(id, category);
-        if (updatedCategory != null) {
-            return ResponseEntity.ok(updatedCategory);
-        }
-        return ResponseEntity.notFound().build();
+        validateUtil.validate(categoryMap, Category.class);
+        Category category = (Category) objectMapperUtil.convertMapToEntity(categoryMap, Category.class);
+
+        category = service.updateCategory(id, category);
+        ResponseComponent<Category> response = ResponseComponent
+                .<Category>builder()
+                .status(HttpStatus.OK)
+                .message("Update category success")
+                .data(category)
+                .build();
+        return new ResponseEntity<>(response, response.getStatus());
     }
 
-    @PatchMapping(value = "/{id}", consumes = "application/json")
-    private ResponseEntity<Category> patchCategory(@PathVariable Long id, @RequestBody Category category) {
-
-        category = getParent(category);
-        if (category == null) {
-            return ResponseEntity.unprocessableEntity().build();
-        }
-
-        Category updatedCategory = service.updateByPatch(id, category);
-        if (updatedCategory != null) {
-            return ResponseEntity.ok(updatedCategory);
-        }
-        return ResponseEntity.notFound().build();
-    }
-
-    private Category getParent(Category category) {
-        if (category.getParent() != null) {
-            Optional<Category> categoryOpt = service.findById(category.getParent().getId());
-            if (categoryOpt.isPresent()) {
-                category.setParent(categoryOpt.get());
-            }
-            else {
-                return null;
-            }
-        }
-        return category;
-    }
 }

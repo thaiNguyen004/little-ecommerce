@@ -1,5 +1,6 @@
 package thainguyen.controller.conf;
 
+import jakarta.persistence.NoResultException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpHeaders;
@@ -48,7 +49,8 @@ public class CustomRestExceptionHandler
                 .status(HttpStatus.BAD_REQUEST)
                 .message("Method argument not valid")
                 .errors(errors).build();
-        return handleExceptionInternal(ex, responseComponent, headers, status, request);
+        return handleExceptionInternal(ex, responseComponent, headers,
+                responseComponent.getStatus(), request);
     }
 
     @ExceptionHandler({ ConstraintViolationException.class })
@@ -66,7 +68,8 @@ public class CustomRestExceptionHandler
                 .message("Method argument not valid")
                 .errors(errors)
                 .build();
-        return new ResponseEntity<>(responseComponent, new HttpHeaders(), responseComponent.getStatus());
+        return handleExceptionInternal(ex, responseComponent, new HttpHeaders(),
+                responseComponent.getStatus(), request);
     }
 
     @Override
@@ -81,7 +84,8 @@ public class CustomRestExceptionHandler
                 .message(ex.getLocalizedMessage())
                 .errors(Arrays.asList(error))
                 .build();
-        return new ResponseEntity<>(responseComponent, new HttpHeaders(), responseComponent.getStatus());
+        return handleExceptionInternal(ex, responseComponent, headers,
+                responseComponent.getStatus(), request);
     }
 
 
@@ -98,21 +102,23 @@ public class CustomRestExceptionHandler
                 .message(errorMessage)
                 .errors(Arrays.asList(error))
                 .build();
-        return new ResponseEntity<>(responseComponent, new HttpHeaders(), responseComponent.getStatus());
+        return handleExceptionInternal(ex, responseComponent, new HttpHeaders(),
+                responseComponent.getStatus(), request);
     }
 
 
 
 
     @ExceptionHandler(SQLIntegrityConstraintViolationException.class)
-    public ResponseEntity<Object> handleSqlIntegrityConstraintViolation (SQLIntegrityConstraintViolationException ex,
-                                                                         WebRequest request) {
+    public ResponseEntity<Object> handleSqlIntegrityConstraintViolation (final SQLIntegrityConstraintViolationException ex,
+                                                                         final WebRequest request) {
         ResponseComponent<?> responseComponent = ResponseComponent.builder()
                 .success(false)
                 .status(HttpStatus.CONFLICT)
                 .message(ex.getMessage())
                 .build();
-        return new ResponseEntity<>(responseComponent, new HttpHeaders(), responseComponent.getStatus());
+        return handleExceptionInternal(ex, responseComponent, new HttpHeaders(),
+                responseComponent.getStatus(), request);
     }
 
     @Override
@@ -126,7 +132,8 @@ public class CustomRestExceptionHandler
                 .status(HttpStatus.NOT_FOUND)
                 .message(error)
                 .build();
-        return new ResponseEntity<>(responseComponent, new HttpHeaders(), responseComponent.getStatus());
+        return handleExceptionInternal(ex, responseComponent, headers,
+                responseComponent.getStatus(), request);
     }
 
     @Override
@@ -143,7 +150,8 @@ public class CustomRestExceptionHandler
                 .status(HttpStatus.METHOD_NOT_ALLOWED)
                 .message(error.toString())
                 .build();
-        return new ResponseEntity<>(responseComponent, new HttpHeaders(), responseComponent.getStatus());
+        return handleExceptionInternal(ex, responseComponent, headers,
+                responseComponent.getStatus(), request);
     }
 
     @Override
@@ -162,8 +170,30 @@ public class CustomRestExceptionHandler
                 .errors(Arrays.asList(error.toString()))
                 .message(ex.getLocalizedMessage())
                 .build();
-        return new ResponseEntity<>(responseComponent, new HttpHeaders(), responseComponent.getStatus());
+        return handleExceptionInternal(ex, responseComponent, headers,
+                responseComponent.getStatus(), request);
+    }
+
+    @ExceptionHandler(NoResultException.class)
+    public ResponseEntity<?> handleNoResultException(final NoResultException ex, final WebRequest request) {
+        ResponseComponent<?> responseComponent = ResponseComponent.builder()
+                .success(true)
+                .status(HttpStatus.NOT_FOUND)
+                .message(ex.getMessage())
+                .build();
+        return handleExceptionInternal(ex, responseComponent, new HttpHeaders(),
+                responseComponent.getStatus(), request);
     }
 
 
+    /*500*/
+    @ExceptionHandler({ NullPointerException.class, IllegalArgumentException.class, IllegalStateException.class })
+    public ResponseEntity<Object> handleInternal(final RuntimeException ex, final WebRequest request) {
+        ResponseComponent<?> responseComponent = ResponseComponent.builder()
+                .success(false)
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .message(ex.getMessage())
+                .build();
+        return handleExceptionInternal(ex, responseComponent, new HttpHeaders(), responseComponent.getStatus(), request);
+    }
 }

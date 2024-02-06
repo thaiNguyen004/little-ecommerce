@@ -36,10 +36,10 @@ public class CategoryTests {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         DocumentContext doc = JsonPath.parse(response.getBody());
-        Number id = doc.read("$.id");
-        String name = doc.read("$.name");
-        String picture = doc.read("$.picture");
-        String descriptioin = doc.read("$.description");
+        Number id = doc.read("$.data.id");
+        String name = doc.read("$.data.name");
+        String picture = doc.read("$.data.picture");
+        String descriptioin = doc.read("$.data.description");
 
         assertThat(id).isEqualTo(153);
         assertThat(name).isEqualTo("pants");
@@ -99,7 +99,6 @@ public class CategoryTests {
         category.setName("DEMO Category");
         category.setDescription("Description of DEMO Category");
         category.setPicture("Link picture of DEMO Category");
-        category.setParent(null);
 
         ResponseEntity<Void> response = restTemplate
                 .withBasicAuth("admin", "password")
@@ -111,10 +110,10 @@ public class CategoryTests {
                 .withBasicAuth("customer", "password")
                 .getForEntity(locationOfNewCategory.getPath(), String.class);
         DocumentContext doc = JsonPath.parse(getResponse.getBody());
-        String name = doc.read("$.name");
-        String picture = doc.read("$.picture");
-        String descriptioin = doc.read("$.description");
-        Number parent = doc.read("$.parent");
+        String name = doc.read("$.data.name");
+        String picture = doc.read("$.data.picture");
+        String descriptioin = doc.read("$.data.description");
+        Number parent = doc.read("$.data.parent");
 
         assertThat(name).isEqualTo("DEMO Category");
         assertThat(descriptioin).isEqualTo("Description of DEMO Category");
@@ -144,13 +143,13 @@ public class CategoryTests {
                 .withBasicAuth("customer", "password")
                 .getForEntity(locationOfNewCategory.getPath(), String.class);
         DocumentContext doc = JsonPath.parse(getResponse.getBody());
-        String name = doc.read("$.name");
-        String picture = doc.read("$.picture");
-        String descriptioin = doc.read("$.description");
+        String name = doc.read("$.data.name");
+        String picture = doc.read("$.data.picture");
+        String descriptioin = doc.read("$.data.description");
 
-        Number parentId = doc.read("$.parent.id");
-        String parentName = doc.read("$.parent.name");
-        String parentPicture = doc.read("$.parent.picture");
+        Number parentId = doc.read("$.data.parent.id");
+        String parentName = doc.read("$.data.parent.name");
+        String parentPicture = doc.read("$.data.parent.picture");
 
         // Self
         assertThat(name).isEqualTo("DEMO Category");
@@ -178,9 +177,8 @@ public class CategoryTests {
         ResponseEntity<Void> response = restTemplate
                 .withBasicAuth("admin", "password")
                 .postForEntity("/api/categories", category, Void.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
-
 
     /*POST Category: Forbiden because cridential info is bad*/
     @Test
@@ -249,15 +247,15 @@ public class CategoryTests {
                 .exchange("/api/categories/152", HttpMethod.PUT, request, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         DocumentContext doc1 = JsonPath.parse(response.getBody());
-        String descriptionShouldNull = doc1.read("$.description");
-        assertThat(descriptionShouldNull).isNull();
+        String description = doc1.read("$.data.description");
+        assertThat(description).isNotNull();
 
         ResponseEntity<String> getResponse = restTemplate
                 .withBasicAuth("employee", "password")
                 .getForEntity("/api/categories/152", String.class);
         DocumentContext doc2 = JsonPath.parse(getResponse.getBody());
-        String nameChanged = doc2.read("$.name");
-        String parent = doc2.read("$.parent");
+        String nameChanged = doc2.read("$.data.name");
+        String parent = doc2.read("$.data.parent");
         assertThat(nameChanged).isEqualTo("Demo name");
         assertThat(parent).isNull();
     }
@@ -281,8 +279,8 @@ public class CategoryTests {
     @Test
     void attemptPutCategoryButCategoryIdNotFound() {
         Category category = new Category();
+        category.setName("name ro rang");
         category.setPicture("Demo link");
-        // missing data required is name
         HttpEntity<Category> request = new HttpEntity<>(category);
 
         ResponseEntity<String> response = restTemplate
@@ -317,105 +315,6 @@ public class CategoryTests {
 
         ResponseEntity<String> response = restTemplate
                 .exchange("/api/categories/152", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-    }
-
-
-
-    /*Patch Category: Update Category success*/
-    @Test
-    @DirtiesContext
-    void shouldReturnOKAndBodyWhenIPatchedDataSuccess() {
-        Category category = new Category();
-        category.setName("Demo name");
-        category.setPicture("Demo link");
-        HttpEntity<Category> request = new HttpEntity<>(category);
-
-        ResponseEntity<String> response = restTemplate
-                .withBasicAuth("employee", "password")
-                .exchange("/api/categories/152", HttpMethod.PATCH, request, String.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        DocumentContext doc = JsonPath.parse(response.getBody());
-        String descriptionNotNull = doc.read("$.description");
-        assertThat(descriptionNotNull).isNotNull();
-
-        ResponseEntity<String> getResponse = restTemplate
-                .withBasicAuth("employee", "password")
-                .getForEntity("/api/categories/152", String.class);
-        DocumentContext doc2 = JsonPath.parse(getResponse.getBody());
-        String nameChanged = doc2.read("$.name");
-        assertThat(nameChanged).isEqualTo("Demo name");
-    }
-
-
-    /*PATCH Category: Category with that id not found in database*/
-    @Test
-    @DirtiesContext
-    void attemptPatchCategoryWithIdNotfound() {
-        Category category = new Category();
-        category.setName("Demo name");
-        category.setPicture("Demo link");
-        HttpEntity<Category> request = new HttpEntity<>(category);
-
-        ResponseEntity<String> response = restTemplate
-                .withBasicAuth("employee", "password")
-                .exchange("/api/categories/9999", HttpMethod.PATCH, request, String.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    }
-
-
-    /*PATCH Category: Update category parent*/
-    @Test
-    @DirtiesContext
-    void attemptUpdateParentToCategory() {
-        Category category = new Category();
-        Category parent = new Category();
-        parent.setId(152L);
-        category.setParent(parent);
-
-        HttpEntity<Category> request = new HttpEntity<>(category);
-
-        ResponseEntity<Category> response = restTemplate
-                .withBasicAuth("employee", "password")
-                .exchange("/api/categories/153", HttpMethod.PATCH, request, Category.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        assertThat(response.getBody().getParent().getName()).isEqualTo("shirt");
-    }
-
-    /*PATCH Category: Bad Cridential*/
-    @Test
-    @DirtiesContext
-    void attemptPatchCategoryWithBadCridential() {
-        Category category = new Category();
-        Category parent = new Category();
-        parent.setId(152L);
-        category.setParent(parent);
-
-        HttpEntity<Category> request = new HttpEntity<>(category);
-
-        ResponseEntity<Category> response = restTemplate
-                .withBasicAuth("customer", "password")
-                .exchange("/api/categories/153", HttpMethod.PATCH, request, Category.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    }
-
-
-    /*PATCH Category: Unauthorized*/
-    @Test
-    @DirtiesContext
-    void attemptPatchCategoryButNotLogin() {
-        Category category = new Category();
-        Category parent = new Category();
-        parent.setId(152L);
-        category.setParent(parent);
-
-        HttpEntity<Category> request = new HttpEntity<>(category);
-
-        ResponseEntity<Category> response = restTemplate
-                .exchange("/api/categories/153", HttpMethod.PATCH, request, Category.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 

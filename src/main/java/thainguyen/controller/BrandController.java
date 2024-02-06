@@ -18,7 +18,6 @@ import java.net.URI;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/api/brands", produces = "application/json")
@@ -33,65 +32,63 @@ public class BrandController {
 
     @GetMapping(value = "/{id}")
     private ResponseEntity<ResponseComponent<Brand>> findById(@PathVariable Long id) {
-        Optional<Brand> brandOptional = service.findById(id);
-        ResponseComponent<Brand> response = new ResponseComponent<>();
-        response.setSuccess(true);
-
-        if (brandOptional.isEmpty()) {
-            response.setData(null);
-            response.setMessage("Invalid brand ID, brand not found");
-        } else {
-            response.setData(brandOptional.get());
-        }
-        return brandOptional.map(brand -> new ResponseEntity<>(response, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(response, HttpStatus.NOT_FOUND));
+        ResponseComponent<Brand> response = ResponseComponent
+                .<Brand>builder().status(HttpStatus.OK)
+                .success(true)
+                .status(HttpStatus.OK)
+                .data(service.findById(id))
+                .build();
+        return new ResponseEntity<>(response, response.getStatus());
     }
 
     @GetMapping
     private ResponseEntity<ResponseComponent<List<Brand>>> findAll() {
         List<Brand> brands = service.findAll();
-        ResponseComponent<List<Brand>> response = new ResponseComponent<>();
-        response.setData(brands);
-        response.setSuccess(true);
-        if (brands.isEmpty()) {
-            response.setMessage("Brand not found");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        ResponseComponent<List<Brand>> response = ResponseComponent
+                .<List<Brand>>builder()
+                .success(true)
+                .status(HttpStatus.OK)
+                .data(brands)
+                .build();
+        return new ResponseEntity<>(response, response.getStatus());
     }
 
     @PostMapping(consumes = "application/json")
     @ResponseBody
-    private ResponseEntity<Void> createBrand(@RequestBody @Valid Brand brand, UriComponentsBuilder ucb)
+    private ResponseEntity<ResponseComponent<Void>> createBrand(@RequestBody @Valid Brand brand, UriComponentsBuilder ucb)
             throws SQLIntegrityConstraintViolationException {
 
         Brand createdBrand = service.create(brand);
         URI locationOfNewBrand = ucb.path("/api/brands/{id}")
                 .buildAndExpand(createdBrand.getId()).toUri();
-        return ResponseEntity.created(locationOfNewBrand).build();
+        ResponseComponent<Void> response = ResponseComponent
+                .<Void>builder()
+                .success(true)
+                .status(HttpStatus.CREATED)
+                .message("Create brand success")
+                .build();
+        return ResponseEntity
+                .created(locationOfNewBrand)
+                .body(response);
     }
+
 
     @PutMapping(value = "/{id}", consumes = "application/json")
-    private ResponseEntity<Brand> putBrand(@PathVariable Long id, @RequestBody Brand brand) {
-        Brand updatedBrand = service.updateByPut(id, brand);
-        if (updatedBrand != null) {
-            return ResponseEntity.ok(updatedBrand);
-        }
-        return ResponseEntity.notFound().build();
-    }
-
-    @PatchMapping(value = "/{id}", consumes = "application/json")
-    private ResponseEntity<Brand> patchBrand(@PathVariable Long id, @RequestBody Map<String, Object> brandPatch)
+    private ResponseEntity<ResponseComponent<Brand>> updateBrand(@PathVariable Long id, @RequestBody Map<String, Object> brandPatch)
             throws MethodArgumentNotValidException {
 
         validateUtil.validate(brandPatch, Brand.class);
         Brand brand = (Brand) objectMapperUtil.convertMapToEntity(brandPatch, Brand.class);
 
-        Brand updatedBrand = service.updateByPatch(id, brand);
-        if (updatedBrand != null) {
-            return ResponseEntity.ok(updatedBrand);
-        }
-        return ResponseEntity.notFound().build();
+        Brand updatedBrand = service.updateBrand(id, brand);
+        ResponseComponent<Brand> response = ResponseComponent
+                .<Brand>builder()
+                .success(true)
+                .status(HttpStatus.OK)
+                .message("Update brand success")
+                .data(updatedBrand)
+                .build();
+        return new ResponseEntity<>(response, response.getStatus());
     }
 
 }

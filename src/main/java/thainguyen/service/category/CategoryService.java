@@ -3,11 +3,11 @@ package thainguyen.service.category;
 import thainguyen.domain.Category;
 import thainguyen.service.generic.GenericService;
 
+import java.sql.SQLIntegrityConstraintViolationException;
+
 public interface CategoryService extends GenericService<Category> {
 
-    Category create(Category category);
+    Category create(Category category) throws SQLIntegrityConstraintViolationException;
 
-    Category updateByPut(Long id, Category category);
-
-    Category updateByPatch(Long id, Category category);
+    Category updateCategory(Long id, Category category);
 }
