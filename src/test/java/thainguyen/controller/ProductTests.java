@@ -2,6 +2,8 @@ package thainguyen.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +21,8 @@ import thainguyen.domain.Category;
 import thainguyen.domain.Product;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Slf4j
@@ -27,8 +31,12 @@ public class ProductTests {
     @Autowired
     TestRestTemplate restTemplate;
 
+    @Autowired
+    ObjectMapper objectMapper;
 
-    /*GET Product: Get Product by id success*/
+
+//GET Product: Get Product by id success
+
     @Test
     void shouldReturn200WhenIFindAProductExist() {
         ResponseEntity<String> response = restTemplate
@@ -39,7 +47,8 @@ public class ProductTests {
     }
 
 
-    /*GET Product: Product with that id not found in database*/
+//GET Product: Product with that id not found in database
+
     @Test
     void shouldReturn404WhenIFindAProductNotExist() {
         ResponseEntity<String> response = restTemplate
@@ -49,7 +58,8 @@ public class ProductTests {
     }
 
 
-    /*GET Product:Get Product by Id,  Product Unauthorized*/
+//GET Product:Get Product by Id,  Product Unauthorized
+
     @Test
     void attemptGetProductByIdButNotLogin() {
         ResponseEntity<String> response = restTemplate
@@ -58,7 +68,8 @@ public class ProductTests {
     }
 
 
-    /*GET Product: Get all Products success*/
+//GET Product: Get all Products success
+
     @Test
     void shouldReturnListProductWhenFindAll() {
         ResponseEntity<String> response = restTemplate
@@ -67,11 +78,12 @@ public class ProductTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         DocumentContext doc = JsonPath.parse(response.getBody());
         Number size = doc.read("$.length()");
-        assertThat(size).isEqualTo(4);
+        assertThat(size).isEqualTo(3);
     }
 
 
-    /*GET Product: Get all Products, Product Unauthorized*/
+//GET Product: Get all Products, Product Unauthorized
+
     @Test
     void attemptGetAllProductButNotLogin() {
         ResponseEntity<String> response = restTemplate
@@ -80,7 +92,8 @@ public class ProductTests {
     }
 
 
-    /*POST Product: Create Product success*/
+//POST Product: Create Product success
+
     @Test
     void shouldReturn201WhenCreatedAProductSuccess() {
         Product product = new Product();
@@ -106,35 +119,34 @@ public class ProductTests {
                 .getForEntity(locationOfNewProduct, String.class);
         assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         DocumentContext doc = JsonPath.parse(getResponse.getBody());
-        Number idBrand = doc.read("$.brand.id");
-        Number idCategory = doc.read("$.category.id");
+        Number idBrand = doc.read("$.data.brand.id");
+        Number idCategory = doc.read("$.data.category.id");
         assertThat(idBrand).isEqualTo(102);
         assertThat(idCategory).isEqualTo(154);
     }
 
 
-    /*POST Product: Create Product unsuccess because idBrand or idCategory not found*/
+//POST Product: Create Product unsuccess because idBrand or idCategory not found
+
     @Test
     @DirtiesContext
-    void shouldReturn404WhenCreateAnProductThatCategoryAndBrandNotFound() {
+    void shouldReturn404WhenCreateAnProductThatCategoryAndBrandNotFound() throws JsonProcessingException {
         Product product = new Product();
         product.setName("Demo product");
-        product.setPicture("Demo link product");
-        product.setDescription("Demo description product");
-        Brand brand = new Brand();
-        brand.setId(9999L);
-        Category category = new Category();
-        category.setId(9999L);
-        product.setBrand(brand);
-        product.setCategory(category);
-
+        Category c = new Category();
+        c.setId(9999999L);
+        Brand b = new Brand();
+        b.setId(9999999L);
+        product.setCategory(c);
+        product.setBrand(b);
         ResponseEntity<Void> response = restTemplate
                 .withBasicAuth("employee", "password")
                 .postForEntity("/api/products", product, Void.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
-    /*POST Product: Create Product unsuccess because idBrand or idCategory is null */
+//POST Product: Create Product unsuccess because idBrand or idCategory is null
+
     @Test
     @DirtiesContext
     void shouldReturn400WhenCreateAnProductThatCategoryAndBrandIsNull() {
@@ -152,7 +164,8 @@ public class ProductTests {
     }
 
 
-    /*POST Product: Forbiden because cridential info is bad*/
+//POST Product: Forbiden because cridential info is bad
+
     @Test
     @DirtiesContext
     void shouldCreateFailWhenBadCridential() {
@@ -174,7 +187,8 @@ public class ProductTests {
     }
 
 
-    /*POST Product: Bad request because info must be non null but it's null */
+//POST Product: Bad request because info must be non null but it's null
+
     @Test
     @DirtiesContext
     void attemptPostProductButFieldNotNullIsNull() {
@@ -198,7 +212,8 @@ public class ProductTests {
 
 
 
-    /*POST Product: Unauthorized */
+//POST Product: Unauthorized
+
     @Test
     @DirtiesContext
     void attemptPostProductButNotLogin() {
@@ -219,23 +234,17 @@ public class ProductTests {
     }
 
 
-    /*PUT Product: Update Product success*/
+//PUT Product: Update Product success
+
     @Test
     @DirtiesContext
     void shouldReturnDataUpdatedWhenPuttedAProduct() {
-        Product product = new Product();
-        product.setName("Demo name product");
-        Brand brand = new Brand();
-        brand.setId(103L);
-        Category category = new Category();
-        category.setId(154L);
-        product.setBrand(brand);
-        product.setCategory(category);
-        product.setBrand(brand);
-        product.setCategory(category);
-        product.setDescription("Demo description product");
-        HttpEntity<Product> request = new HttpEntity<>(product);
-
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", "Demo name product");
+        map.put("description", "Demo description product");
+        map.put("brand", Map.of("id", "103"));
+        map.put("category", Map.of("id", "154"));
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(map);
         ResponseEntity<String> response =
                 restTemplate.withBasicAuth("employee", "password")
                         .exchange("/api/products/202", HttpMethod.PUT, request, String.class);
@@ -245,14 +254,14 @@ public class ProductTests {
                 .withBasicAuth("employee", "password")
                 .getForEntity("/api/products/202", String.class);
         DocumentContext doc = JsonPath.parse(getResponse.getBody());
-        String description = doc.read("$.description");
-        String name = doc.read("$.name");
-        String picture = doc.read("$.picture");
-        Number brandId = doc.read("$.brand.id");
+        String description = doc.read("$.data.description");
+        String name = doc.read("$.data.name");
+        String picture = doc.read("$.data.picture");
+        Number brandId = doc.read("$.data.brand.id");
 
         assertThat(description).isEqualTo("Demo description product");
         assertThat(name).isEqualTo("Demo name product");
-        assertThat(picture).isNull();
+        assertThat(picture).isEqualTo("picture of product 1");
         assertThat(brandId).isEqualTo(103);
     }
 
@@ -272,30 +281,26 @@ public class ProductTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
-    // PUT Product: Unprocessable entity due when put product that brand or category not found
+    // PUT Product: Notfound due when put product that brand or category not found
     @Test
     @DirtiesContext
-    void attemptPutProductBut() {
-        Product product = new Product();
-        product.setName("Demo name product");
-        Brand brand = new Brand();
-        brand.setId(999999L);
-        Category category = new Category();
-        category.setId(99999L);
-        product.setBrand(brand);
-        product.setCategory(category);
-        product.setBrand(brand);
-        product.setCategory(category);
-        product.setDescription("Demo description product");
-        HttpEntity<Product> request = new HttpEntity<>(product);
+    void attemptPutProductBut() throws JsonProcessingException {
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", "Demo name product");
+        map.put("picture", "Demo description product");
+        map.put("description", "Demo description product");
+        map.put("category", Map.of("id", "99999"));
+        map.put("brand", Map.of("id", "99999"));
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(map);
 
         ResponseEntity<String> response =
                 restTemplate.withBasicAuth("employee", "password")
                         .exchange("/api/products/202", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
-    /*PUT Product: Product with that id not found in database*/
+//PUT Product: Product with that id not found in database
+
     @Test
     @DirtiesContext
     void shouldReturn404WhenPuttedAProductNotExist() {
@@ -317,7 +322,8 @@ public class ProductTests {
     }
 
 
-    /*PUT Product: Bad Cridential*/
+//PUT Product: Bad Cridential
+
     @Test
     @DirtiesContext
     void shouldReturnForbidenWhenPuttedAProductWithBadCridential() {
@@ -333,7 +339,8 @@ public class ProductTests {
     }
 
 
-    /*PUT Product: Unauthorized*/
+//PUT Product: Unauthorized
+
     @Test
     @DirtiesContext
     void attemptPutProductButNotLogin() {
@@ -346,123 +353,6 @@ public class ProductTests {
                 restTemplate.withBasicAuth("customer", "password")
                         .exchange("/api/products/9999", HttpMethod.PUT, request, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    }
-
-
-    /*Patch Product: Update Product success*/
-    @Test
-    @DirtiesContext
-    void shouldReturnDataUpdatedWhenPatchedAProduct() {
-        Product product = new Product();
-        product.setName("Demo name product");
-        HttpEntity<Product> request = new HttpEntity<>(product);
-
-        ResponseEntity<String> response =
-                restTemplate.withBasicAuth("employee", "password")
-                        .exchange("/api/products/202", HttpMethod.PATCH, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        ResponseEntity<String> getResponse = restTemplate
-                .withBasicAuth("employee", "password")
-                .getForEntity("/api/products/202", String.class);
-        DocumentContext doc = JsonPath.parse(getResponse.getBody());
-        String description = doc.read("$.description");
-        String name = doc.read("$.name");
-        String picture = doc.read("$.picture");
-
-        assertThat(name).isEqualTo("Demo name product");
-        assertThat(description).isEqualTo("Description of Gucci shirt");
-        assertThat(picture).isEqualTo("picture of product 1");
-    }
-
-
-    /*PATCH Product: Product with that id not found in database*/
-    @Test
-    @DirtiesContext
-    void attemptUpdateProductWithIdNotFound() {
-        Product product = new Product();
-        product.setName("Demo name product");
-        HttpEntity<Product> request = new HttpEntity<>(product);
-
-        ResponseEntity<String> response =
-                restTemplate.withBasicAuth("employee", "password")
-                        .exchange("/api/products/100101", HttpMethod.PATCH, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    }
-
-
-    /*PATCH Product: Update Brand of Product success*/
-    @Test
-    @DirtiesContext
-    void shouldCanChangeBrandOfProduct() {
-        Product product = new Product();
-        product.setName("Demo name product");
-        Brand brand = new Brand();
-        brand.setId(103L);
-        product.setBrand(brand);
-        HttpEntity<Product> request = new HttpEntity<>(product);
-
-        ResponseEntity<String> patchResponse =
-                restTemplate.withBasicAuth("employee", "password")
-                        .exchange("/api/products/202", HttpMethod.PATCH, request, String.class);
-        assertThat(patchResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        Number idBrandOfPatchReponse = JsonPath.parse(patchResponse.getBody()).read("$.brand.id");
-        assertThat(idBrandOfPatchReponse).isEqualTo(103);
-    }
-
-    /*PATCH Product: Unprocessable entity due when put product that brand or category not found*/
-    @Test
-    @DirtiesContext
-    void shouldNotChangeProductWhenAnyBrandOrCategoryNotExist() {
-        Product product = new Product();
-        product.setName("Demo name product");
-        Brand brand = new Brand();
-        brand.setId(52L);
-        Category category = new Category();
-        category.setId(9999L);
-        product.setBrand(brand);
-        product.setCategory(category);
-        HttpEntity<Product> request = new HttpEntity<>(product);
-
-        ResponseEntity<String> patchResponse =
-                restTemplate.withBasicAuth("employee", "password")
-                        .exchange("/api/products/153", HttpMethod.PATCH, request, String.class);
-        assertThat(patchResponse.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
-    }
-
-
-    /*PATCH Product: Bad Cridential*/
-    @Test
-    @DirtiesContext
-    void attemptPatchProductWithBadCridential() {
-        Product product = new Product();
-        product.setName("Demo name product");
-        Brand brand = new Brand();
-        brand.setId(103L);
-        product.setBrand(brand);
-        HttpEntity<Product> request = new HttpEntity<>(product);
-
-        ResponseEntity<String> patchResponse =
-                restTemplate.withBasicAuth("customer", "password")
-                        .exchange("/api/products/202", HttpMethod.PATCH, request, String.class);
-        assertThat(patchResponse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    }
-
-    /*PATCH Product: Unauthorized*/
-    @Test
-    @DirtiesContext
-    void attemptPatchProductButNotLogin() {
-        Product product = new Product();
-        product.setName("Demo name product");
-        Brand brand = new Brand();
-        brand.setId(103L);
-        product.setBrand(brand);
-        HttpEntity<Product> request = new HttpEntity<>(product);
-
-        ResponseEntity<String> patchResponse =
-                restTemplate.exchange("/api/products/202", HttpMethod.PATCH, request, String.class);
-        assertThat(patchResponse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
 }

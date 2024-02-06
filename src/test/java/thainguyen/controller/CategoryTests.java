@@ -300,6 +300,7 @@ public class CategoryTests {
 
         ResponseEntity<String> response = restTemplate
                 .withBasicAuth("customer", "password")
+                .withBasicAuth("customer", "password")
                 .exchange("/api/categories/152", HttpMethod.PUT, request, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }

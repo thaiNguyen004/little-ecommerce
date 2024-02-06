@@ -7,8 +7,6 @@ public interface SizeService extends GenericService<Size> {
 
     Size create(Size size);
 
-    Size updateByPut(Long id, Size size);
-
-    Size updateByPatch(Long id, Size size);
+    Size updateSize(Long id, Size size);
 }
 

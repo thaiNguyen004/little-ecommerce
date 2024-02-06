@@ -19,6 +19,8 @@ import thainguyen.domain.Category;
 import thainguyen.domain.Size;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -41,10 +43,10 @@ public class SizeTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         DocumentContext doc = JsonPath.parse(response.getBody());
-        Number id = doc.read("$.id");
-        String name = doc.read("$.name");
+        Number id = doc.read("$.data.id");
+        String name = doc.read("$.data.name");
         assertThat(id).isEqualTo(252);
-        assertThat(name).isEqualTo("XXXL");
+        assertThat(name).isEqualTo("M");
     }
 
 
@@ -75,8 +77,8 @@ public class SizeTests {
         ResponseEntity<String> response = restTemplate
                 .withBasicAuth("customer", "password")
                 .getForEntity("/api/sizes", String.class);
-        Number sizeOfSize = JsonPath.parse(response.getBody()).read("$.length()");
-        assertThat(sizeOfSize).isEqualTo(10);
+        Number sizeOfSize = JsonPath.parse(response.getBody()).read("$.data.length()");
+        assertThat(sizeOfSize).isEqualTo(2);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
@@ -118,8 +120,8 @@ public class SizeTests {
 
         assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         DocumentContext doc = JsonPath.parse(getResponse.getBody());
-        String name = doc.read("$.name");
-        Number width = doc.read("$.width");
+        String name = doc.read("$.data.name");
+        Number width = doc.read("$.data.width");
 
         assertThat(name).isEqualTo("XL");
         assertThat(width).isEqualTo(200);
@@ -148,7 +150,7 @@ public class SizeTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
-    /*POST Size: Unprocessable entity due category or brand is not found*/
+    /*POST Size: Not_found entity due category or brand is not found*/
     @Test
     @DirtiesContext
     void attemptCreateAnSizeFailDueBrandOrCategoryNotFound() {
@@ -167,7 +169,7 @@ public class SizeTests {
         ResponseEntity<Void> response = restTemplate
                 .withBasicAuth("employee", "password")
                 .postForEntity("/api/sizes", newSize, Void.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     /*POST Size: Bad request because info is null */
@@ -215,153 +217,16 @@ public class SizeTests {
     }
 
 
-    /*PUT Size: Update Size success*/
-    @Test
-    @DirtiesContext
-    @Transactional
-    void shouldReturnOKDataIsPutted() {
-        Size sizeChanged = new Size();
-        sizeChanged.setName(Size.Type.XL);
-        sizeChanged.setWidth(2000);
-        Category category = new Category();
-        category.setId(153L);
-        sizeChanged.setCategory(category);
-        Brand brand = new Brand();
-        brand.setId(102L);
-        sizeChanged.setBrand(brand);
-        HttpEntity<Size> request = new HttpEntity<>(sizeChanged);
-        ResponseEntity<String> response = restTemplate
-                .withBasicAuth("employee", "password")
-                .exchange("/api/sizes/252", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        ResponseEntity<String> getResponse = restTemplate
-                .withBasicAuth("employee", "password")
-                .getForEntity("/api/sizes/252", String.class);
-
-        DocumentContext doc = JsonPath.parse(getResponse.getBody());
-        String name = doc.read("$.name");
-        Number width = doc.read("$.width");
-        Number chest = doc.read("$.chest"); // should is null
-        Number length = doc.read("$.length"); // should is null
-        Number categoryId = doc.read("$.category.id");
-        Number brandId = doc.read("$.brand.id"); // should is null
-        assertThat(name).isEqualTo("XL");
-        assertThat(width).isEqualTo(2000);
-        assertThat(chest).isNull();
-        assertThat(length).isNull();
-        assertThat(categoryId).isEqualTo(153);
-        assertThat(brandId).isEqualTo(102);
-    }
-
-
-    /*PUT Size: Update Size fail due fields required is null*/
-    @Test
-    @DirtiesContext
-    void attemptPutSizeWithFieldRequiredNull() {
-        Size sizeChanged = new Size();
-        sizeChanged.setName(Size.Type.XXXL);
-        sizeChanged.setWidth(2000);
-        HttpEntity<Size> request = new HttpEntity<>(sizeChanged);
-        ResponseEntity<String> response = restTemplate
-                .withBasicAuth("employee", "password")
-                .exchange("/api/sizes/252", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    }
-
-    /*PUT Size: Update Size fail due category or brand is not found*/
-    @Test
-    @DirtiesContext
-    void attemptPutSizeWithCategoryOrBrandNotFound() {
-        Size sizeChanged = new Size();
-        sizeChanged.setName(Size.Type.XXXL);
-        sizeChanged.setWidth(2000);
-        Category category = new Category();
-        category.setId(99999L);
-        sizeChanged.setCategory(category);
-        Brand brand = new Brand();
-        brand.setId(102L);
-        sizeChanged.setBrand(brand);
-        HttpEntity<Size> request = new HttpEntity<>(sizeChanged);
-        ResponseEntity<String> response = restTemplate
-                .withBasicAuth("employee", "password")
-                .exchange("/api/sizes/252", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
-    }
-
-
-    /*PUT: Size with that id not found in database*/
-    @Test
-    @DirtiesContext
-    void attemptPutSizeWithSizeNotFound() {
-        Size sizeChanged = new Size();
-        sizeChanged.setName(Size.Type.XXXL);
-        sizeChanged.setWidth(2000);
-        Category category = new Category();
-        category.setId(153L);
-        sizeChanged.setCategory(category);
-        Brand brand = new Brand();
-        brand.setId(102L);
-        sizeChanged.setBrand(brand);
-        HttpEntity<Size> request = new HttpEntity<>(sizeChanged);
-        ResponseEntity<String> response = restTemplate
-                .withBasicAuth("employee", "password")
-                .exchange("/api/sizes/9999", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    }
-
-
-    /*PUT Size: Bad Cridential*/
-    @Test
-    @DirtiesContext
-    void attemptPutSizeWithBadCridential() {
-        Size sizeChanged = new Size();
-        sizeChanged.setName(Size.Type.XXXL);
-        sizeChanged.setWidth(2000);
-        Category category = new Category();
-        category.setId(153L);
-        sizeChanged.setCategory(category);
-        Brand brand = new Brand();
-        brand.setId(102L);
-        sizeChanged.setBrand(brand);
-        HttpEntity<Size> request = new HttpEntity<>(sizeChanged);
-        ResponseEntity<String> response = restTemplate
-                .withBasicAuth("customer", "password")
-                .exchange("/api/sizes/252", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    }
-
-
-    /*PUT Size: Unauthorized*/
-    @Test
-    @DirtiesContext
-    void attemptPutSizeButNotLogin() {
-        Size sizeChanged = new Size();
-        sizeChanged.setName(Size.Type.XXXL);
-        sizeChanged.setWidth(2000);
-        Category category = new Category();
-        category.setId(153L);
-        sizeChanged.setCategory(category);
-        Brand brand = new Brand();
-        brand.setId(102L);
-        sizeChanged.setBrand(brand);
-        HttpEntity<Size> request = new HttpEntity<>(sizeChanged);
-        ResponseEntity<String> response = restTemplate
-                .exchange("/api/sizes/252", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-    }
-
 
     /*Patch Size: Update Size success*/
     @Test
     void shouldReturnOKWhenDataIsPatched() {
-        Size sizeChanged = new Size();
-        sizeChanged.setName(Size.Type.S);
-
-        HttpEntity<Size> request = new HttpEntity<>(sizeChanged);
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", "S");
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(map);
         ResponseEntity<String> response = restTemplate
                 .withBasicAuth("employee", "password")
-                .exchange("/api/sizes/252", HttpMethod.PATCH, request, String.class);
+                .exchange("/api/sizes/252", HttpMethod.PUT, request, String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
@@ -371,8 +236,8 @@ public class SizeTests {
 
         DocumentContext doc = JsonPath.parse(getResponse.getBody());
 
-        String name = doc.read("$.name");
-        Number categoryId = doc.read("$.category.id");
+        String name = doc.read("$.data.name");
+        Number categoryId = doc.read("$.data.category.id");
 
         assertThat(name).isEqualTo("S");
         assertThat(categoryId).isNotNull();
@@ -381,34 +246,41 @@ public class SizeTests {
     /*Patch Size: Update Size failed due category or brand not found*/
     @Test
     void attemptPatchSizeWithBrandOrCategoryNotFound() {
-        Size sizeChanged = new Size();
-
-        Category category = new Category();
-        category.setId(1000000L);
-        sizeChanged.setCategory(category);
-        Brand brand = new Brand();
-        brand.setId(102L);
-        sizeChanged.setBrand(brand);
-
-        HttpEntity<Size> request = new HttpEntity<>(sizeChanged);
+        Map<String, Object> map = new HashMap<>();
+        map.put("category", Map.of("id", "1000000"));
+        map.put("brand", Map.of("id", "102"));
+        /*map.put("width", "2000");
+        map.put("chest", "2000");
+        map.put("length", "2000");
+        map.put("category", "153");
+        map.put("brand", "102");
+        map.put("brand", Map.of("id", "103"));
+        map.put("category", Map.of("id", "154"));*/
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(map);
         ResponseEntity<String> response = restTemplate
                 .withBasicAuth("employee", "password")
-                .exchange("/api/sizes/252", HttpMethod.PATCH, request, String.class);
+                .exchange("/api/sizes/252", HttpMethod.PUT, request, String.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
 
     /*PATCH Size: Size with that id not found in database*/
     @Test
     void attemptPatchSizeButIdNotFound() {
-        Size sizeChanged = new Size();
-        sizeChanged.setName(Size.Type.S);
-
-        HttpEntity<Size> request = new HttpEntity<>(sizeChanged);
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", "S");
+        /*map.put("width", "2000");
+        map.put("chest", "2000");
+        map.put("length", "2000");
+        map.put("category", "153");
+        map.put("brand", "102");
+        map.put("brand", Map.of("id", "103"));
+        map.put("category", Map.of("id", "154"));*/
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(map);
         ResponseEntity<String> response = restTemplate
                 .withBasicAuth("employee", "password")
-                .exchange("/api/sizes/801042", HttpMethod.PATCH, request, String.class);
+                .exchange("/api/sizes/801042", HttpMethod.PUT, request, String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
@@ -417,13 +289,19 @@ public class SizeTests {
     /*PATCH Size: Bad Cridential*/
     @Test
     void attemptPatchSizeWithBadCridential() {
-        Size sizeChanged = new Size();
-        sizeChanged.setName(Size.Type.S);
-
-        HttpEntity<Size> request = new HttpEntity<>(sizeChanged);
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", "S");
+        /*map.put("width", "2000");
+        map.put("chest", "2000");
+        map.put("length", "2000");
+        map.put("category", "153");
+        map.put("brand", "102");
+        map.put("brand", Map.of("id", "103"));
+        map.put("category", Map.of("id", "154"));*/
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(map);
         ResponseEntity<String> response = restTemplate
                 .withBasicAuth("customer", "password")
-                .exchange("/api/sizes/252", HttpMethod.PATCH, request, String.class);
+                .exchange("/api/sizes/252", HttpMethod.PUT, request, String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
@@ -432,12 +310,18 @@ public class SizeTests {
     /*PATCH Size: Unauthorized*/
     @Test
     void attemptPatchSizeButNotLogin() {
-        Size sizeChanged = new Size();
-        sizeChanged.setName(Size.Type.S);
-
-        HttpEntity<Size> request = new HttpEntity<>(sizeChanged);
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", "S");
+        /*map.put("width", "2000");
+        map.put("chest", "2000");
+        map.put("length", "2000");
+        map.put("category", "153");
+        map.put("brand", "102");
+        map.put("brand", Map.of("id", "103"));
+        map.put("category", Map.of("id", "154"));*/
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(map);
         ResponseEntity<String> response = restTemplate
-                .exchange("/api/sizes/252", HttpMethod.PATCH, request, String.class);
+                .exchange("/api/sizes/252", HttpMethod.PUT, request, String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }

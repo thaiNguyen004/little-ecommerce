@@ -20,6 +20,8 @@ import thainguyen.domain.valuetypes.Price;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.Currency;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -67,7 +69,7 @@ public class DetailProductTests {
                 .withBasicAuth("customer", "password")
                 .getForEntity("/api/detailproducts", String.class);
         DocumentContext doc = JsonPath.parse(response.getBody());
-        Number length = doc.read("$.length()");
+        Number length = doc.read("$.data.length()");
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(length).isEqualTo(3);
     }
@@ -81,9 +83,9 @@ public class DetailProductTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
-
     /*POST DetailProduct: Create DetailProduct success*/
     @Test
+    @DirtiesContext
     void shouldReturn201WhenCreatedAProductSuccess() {
         DetailProduct detailProduct = new DetailProduct();
         detailProduct.setName("demo name");
@@ -94,7 +96,7 @@ public class DetailProductTests {
         product.setId(204L);
         detailProduct.setSize(size);
         detailProduct.setProduct(product);
-        detailProduct.setPrice(new Price(BigDecimal.valueOf(999.99), Currency.getInstance("VND")));
+        detailProduct.setPrice(119000);
 
         ResponseEntity<Void> response = restTemplate
                 .withBasicAuth("employee", "password")
@@ -108,44 +110,45 @@ public class DetailProductTests {
         assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         DocumentContext doc = JsonPath.parse(getResponse.getBody());
-        Number weight = doc.read("$.weight");
-        Number sizeId = doc.read("$.size.id");
-        Number productId = doc.read("$.product.id");
-        Double valuePrice = doc.read("$.price.value");
-        String currencyPrice = doc.read("$.price.currency");
+        Number weight = doc.read("$.data.weight");
+        Number sizeId = doc.read("$.data.size.id");
+        Number productId = doc.read("$.data.product.id");
+        Integer valuePrice = doc.read("$.data.price");
         assertThat(weight).isEqualTo(999.99);
         assertThat(sizeId).isEqualTo(253);
         assertThat(productId).isEqualTo(204);
-        assertThat(valuePrice).isEqualTo(999.99);
-        assertThat(currencyPrice).isEqualTo("VND");
+        assertThat(valuePrice).isEqualTo(119000);
     }
 
 
     /*POST DetailProduct: Create DetailProduct unsuccess because idSize or idProduct not found*/
     @Test
+    @DirtiesContext
     void shouldReturn404WhenCreatedADetailProductThatProductOrSizeNotFound() {
         DetailProduct detailProduct = new DetailProduct();
+        detailProduct.setName("detail product name");
         Size size = new Size();
         size.setId(9999L);
         detailProduct.setSize(size);
         Product product = new Product();
         product.setId(202L);
         detailProduct.setProduct(product);
-        detailProduct.setPrice(new Price(BigDecimal.valueOf(999.99), Currency.getInstance("VND")));
+        detailProduct.setPrice(119000);
         detailProduct.setWeight(999.99);
 
         ResponseEntity<Void> response = restTemplate
                 .withBasicAuth("employee", "password")
                 .postForEntity("/api/detailproducts", detailProduct, Void.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
 
     /*POST DetailProduct: Bad request because info must be non null but it's null */
     @Test
+    @DirtiesContext
     void attemptPostDetailProductButSizeOrProductIsNull() {
         DetailProduct detailProduct = new DetailProduct();
-        detailProduct.setPrice(new Price(BigDecimal.valueOf(999.99), Currency.getInstance("VND")));
+        detailProduct.setPrice(119000);
         detailProduct.setWeight(999.99);
 
         ResponseEntity<Void> response = restTemplate
@@ -157,6 +160,7 @@ public class DetailProductTests {
 
     /*POST DetailProduct: Forbiden because cridential info is bad*/
     @Test
+    @DirtiesContext
     void attemptPostDetailProductWithBadCridential() {
         DetailProduct detailProduct = new DetailProduct();
         detailProduct.setName("demo detailproduct name");
@@ -166,7 +170,7 @@ public class DetailProductTests {
         Product product = new Product();
         product.setId(202L);
         detailProduct.setProduct(product);
-        detailProduct.setPrice(new Price(BigDecimal.valueOf(999.99), Currency.getInstance("VND")));
+        detailProduct.setPrice(119000);
         detailProduct.setWeight(999.99);
 
         ResponseEntity<Void> response = restTemplate
@@ -178,6 +182,7 @@ public class DetailProductTests {
 
     /*POST DetailProduct: Unauthorized */
     @Test
+    @DirtiesContext
     void attemptPostDetailProductButNotLogin() {
         DetailProduct detailProduct = new DetailProduct();
         detailProduct.setName("demo detailproduct name");
@@ -187,7 +192,7 @@ public class DetailProductTests {
         Product product = new Product();
         product.setId(202L);
         detailProduct.setProduct(product);
-        detailProduct.setPrice(new Price(BigDecimal.valueOf(999.99), Currency.getInstance("VND")));
+        detailProduct.setPrice(119000);
         detailProduct.setWeight(999.99);
 
         ResponseEntity<Void> response = restTemplate
@@ -195,161 +200,27 @@ public class DetailProductTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
-
     /*PUT DetailProduct: Update DetailProduct success*/
     @Test
     @DirtiesContext
-    void shouldReturnDataUpdatedWhenPuttedADetailProduct() {
-        DetailProduct detailProduct = new DetailProduct();
-        detailProduct.setName("new name");
-        detailProduct.setWeight(1.1);
-        detailProduct.setPrice(new Price(BigDecimal.valueOf(1232L), Currency.getInstance("VND")));
-        Size size = new Size();
-        size.setId(253L);
-        detailProduct.setSize(size);
-        Product product = new Product();
-        product.setId(204L);
-        detailProduct.setProduct(product);
-
-        HttpEntity<DetailProduct> request = new HttpEntity<>(detailProduct);
-
-        ResponseEntity<String> response =
-                restTemplate.withBasicAuth("employee", "password")
-                        .exchange("/api/detailproducts/304", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        ResponseEntity<String> getResponse = restTemplate
-                .withBasicAuth("employee", "password")
-                .getForEntity("/api/detailproducts/304", String.class);
-        DocumentContext doc = JsonPath.parse(getResponse.getBody());
-        Number weight = doc.read("$.weight");
-        Number sizeId = doc.read("$.size.id");
-        Number productId = doc.read("$.product.id");
-        Double price = doc.read("$.price.value");
-        assertThat(weight).isEqualTo(1.1);
-        assertThat(sizeId).isEqualTo(253);
-        assertThat(productId).isEqualTo(204);
-        assertThat(price).isNotNull();
-    }
-
-
-    /*PUT DetailProduct: Bad request due when put DetailProduct missing size or product*/
-    @Test
-    @DirtiesContext
-    void attemptPutDetailProductButMissingInfo() {
-        DetailProduct detailProduct = new DetailProduct();
-
-        detailProduct.setWeight(1.1);
-        Size size = new Size();
-        size.setId(253L);
-        detailProduct.setSize(size);
-        Product product = new Product();
-        product.setId(204L);
-        detailProduct.setProduct(product);
-
-        HttpEntity<DetailProduct> request = new HttpEntity<>(detailProduct);
-
-        ResponseEntity<String> response =
-                restTemplate.withBasicAuth("employee", "password")
-                        .exchange("/api/detailproducts/304", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    }
-
-
-    /*PUT DetailProduct: DetailProduct with that id not found in database*/
-    @Test
-    @DirtiesContext
-    void attemptPutDetailProductNotFound() {
-        DetailProduct detailProduct = new DetailProduct();
-        detailProduct.setName("new name");
-        detailProduct.setWeight(1.1);
-        detailProduct.setPrice(new Price(BigDecimal.valueOf(1232L), Currency.getInstance("VND")));
-        Size size = new Size();
-        size.setId(253L);
-        detailProduct.setSize(size);
-        Product product = new Product();
-        product.setId(204L);
-        detailProduct.setProduct(product);
-
-        HttpEntity<DetailProduct> request = new HttpEntity<>(detailProduct);
-
-        ResponseEntity<String> response =
-                restTemplate.withBasicAuth("employee", "password")
-                        .exchange("/api/detailproducts/9999", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    }
-
-
-    /*PUT DetailProduct: Bad Cridential*/
-    @Test
-    @DirtiesContext
-    void attemptPutDetailProductWithBadCridential() {
-        DetailProduct detailProduct = new DetailProduct();
-        detailProduct.setName("new name");
-        detailProduct.setWeight(1.1);
-        detailProduct.setPrice(new Price(BigDecimal.valueOf(1232L), Currency.getInstance("VND")));
-        Size size = new Size();
-        size.setId(253L);
-        detailProduct.setSize(size);
-        Product product = new Product();
-        product.setId(204L);
-        detailProduct.setProduct(product);
-
-        HttpEntity<DetailProduct> request = new HttpEntity<>(detailProduct);
-
-        ResponseEntity<String> response =
-                restTemplate.withBasicAuth("customer", "password")
-                        .exchange("/api/detailproducts/304", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    }
-
-
-    /*PUT DetailProduct: Unauthorized*/
-    @Test
-    @DirtiesContext
-    void attemptPutDetailProductButNotLogin() {
-        DetailProduct detailProduct = new DetailProduct();
-        detailProduct.setName("new name");
-        detailProduct.setWeight(1.1);
-        detailProduct.setPrice(new Price(BigDecimal.valueOf(1232L), Currency.getInstance("VND")));
-        Size size = new Size();
-        size.setId(253L);
-        detailProduct.setSize(size);
-        Product product = new Product();
-        product.setId(204L);
-        detailProduct.setProduct(product);
-
-        HttpEntity<DetailProduct> request = new HttpEntity<>(detailProduct);
-
-        ResponseEntity<String> response =
-                restTemplate
-                        .exchange("/api/detailproducts/304", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-    }
-
-
-    /*Patch DetailProduct: Update DetailProduct success*/
-    @Test
-    @DirtiesContext
     void shouldReturnDataUpdatedWhenPatchedAProduct() {
-        DetailProduct detailProduct = new DetailProduct();
-        detailProduct.setWeight(1.1);
-
-        HttpEntity<DetailProduct> request = new HttpEntity<>(detailProduct);
+        Map<String, Object> map = new HashMap<>();
+        map.put("weight", "1.1");
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(map);
 
         ResponseEntity<String> response =
                 restTemplate.withBasicAuth("employee", "password")
-                        .exchange("/api/detailproducts/304", HttpMethod.PATCH, request, String.class);
+                        .exchange("/api/detailproducts/304", HttpMethod.PUT, request, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         ResponseEntity<String> getResponse = restTemplate
                 .withBasicAuth("employee", "password")
                 .getForEntity("/api/detailproducts/304", String.class);
         DocumentContext doc = JsonPath.parse(getResponse.getBody());
-        Number weight = doc.read("$.weight");
-        Number sizeId = doc.read("$.size.id");
-        Number productId = doc.read("$.product.id");
-        Double priceValue = doc.read("$.price.value");
+        Number weight = doc.read("$.data.weight");
+        Number sizeId = doc.read("$.data.size.id");
+        Number productId = doc.read("$.data.product.id");
+        Integer priceValue = doc.read("$.data.price");
         assertThat(weight).isEqualTo(1.1);
         assertThat(sizeId).isNotNull();
         assertThat(productId).isNotNull();
@@ -357,23 +228,22 @@ public class DetailProductTests {
     }
 
 
-    /*PATCH DetailProduct: DetailProduct with that id not found in database*/
+    /*PUT DetailProduct: DetailProduct with that id not found in database*/
     @Test
     @DirtiesContext
     void attemptPatchDetailProductNotFound() {
-        DetailProduct detailProduct = new DetailProduct();
-        detailProduct.setWeight(1.1);
-
-        HttpEntity<DetailProduct> request = new HttpEntity<>(detailProduct);
-
+        Map<String, Object> map = new HashMap<>();
+        map.put("product", Map.of("id", "204"));
+        map.put("weight", "1.1");
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(map);
         ResponseEntity<String> response =
                 restTemplate.withBasicAuth("employee", "password")
-                        .exchange("/api/detailproducts/99999", HttpMethod.PATCH, request, String.class);
+                        .exchange("/api/detailproducts/99999", HttpMethod.PUT, request, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
 
-    /*PATCH DetailProduct: Update Product of DetailProduct success*/
+    /*PUT DetailProduct: Update Product of DetailProduct success*/
     @Test
     @DirtiesContext
     void updateProductOfDetailProduct() {
@@ -387,76 +257,69 @@ public class DetailProductTests {
 
         ResponseEntity<String> response =
                 restTemplate.withBasicAuth("employee", "password")
-                        .exchange("/api/detailproducts/304", HttpMethod.PATCH, request, String.class);
+                        .exchange("/api/detailproducts/304", HttpMethod.PUT, request, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         ResponseEntity<String> getResponse = restTemplate
                 .withBasicAuth("employee", "password")
                 .getForEntity("/api/detailproducts/304", String.class);
         DocumentContext doc = JsonPath.parse(getResponse.getBody());
-        Number weight = doc.read("$.weight");
-        Number sizeId = doc.read("$.size.id");
-        String productName = doc.read("$.product.name");
-        Double priceValue = doc.read("$.price.value");
+        Number weight = doc.read("$.data.weight");
+        Number sizeId = doc.read("$.data.size.id");
+        String productName = doc.read("$.data.product.name");
+        Integer priceValue = doc.read("$.data.price");
         assertThat(weight).isEqualTo(1.1);
         assertThat(sizeId).isNotNull();
         assertThat(productName).isEqualTo("Louis Vuitton shirt");
-        assertThat(priceValue).isEqualTo(15555.00);
+        assertThat(priceValue).isEqualTo(15555);
     }
 
 
-    /*PATCH DetailProduct: Update DetailProduct unsuccess due id size or id product not found*/
+    /*PUT DetailProduct: Update DetailProduct unsuccess due id size or id product not found*/
     @Test
     @DirtiesContext
     void attemptUpdateSizeofDetailProductNotFound() {
-        DetailProduct detailProduct = new DetailProduct();
-        Size size = new Size();
-        size.setId(99999L);
-        detailProduct.setWeight(1.1);
-        detailProduct.setSize(size);
-
-        HttpEntity<DetailProduct> request = new HttpEntity<>(detailProduct);
+        Map<String, Object> map = new HashMap<>();
+        map.put("size", Map.of("id", "99999"));
+        map.put("weight", "1.1");
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(map);
 
         ResponseEntity<String> response =
                 restTemplate.withBasicAuth("employee", "password")
-                        .exchange("/api/detailproducts/304", HttpMethod.PATCH, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+                        .exchange("/api/detailproducts/304", HttpMethod.PUT, request, String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
 
-    /*PATCH DetailProduct: Bad Cridential*/
+    /*PUT DetailProduct: Bad Cridential*/
     @Test
     @DirtiesContext
     void attemptUpdateDetailProductWithBadCridential() {
-        DetailProduct detailProduct = new DetailProduct();
-        Product product = new Product();
-        product.setId(204L);
-        detailProduct.setWeight(1.1);
-
-        HttpEntity<DetailProduct> request = new HttpEntity<>(detailProduct);
+        Map<String, Object> map = new HashMap<>();
+        map.put("product", Map.of("id", "204"));
+        map.put("weight", "1.1");
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(map);
 
         ResponseEntity<String> response =
                 restTemplate
                         .withBasicAuth("customer", "password")
-                        .exchange("/api/detailproducts/304", HttpMethod.PATCH, request, String.class);
+                        .exchange("/api/detailproducts/304", HttpMethod.PUT, request, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
 
-    /*PATCH DetailProduct: Unauthorized*/
+    /*PUT DetailProduct: Unauthorized*/
     @Test
     @DirtiesContext
     void attemptUpdateDetailProductButNotLogin() {
-        DetailProduct detailProduct = new DetailProduct();
-        Product product = new Product();
-        product.setId(204L);
-        detailProduct.setWeight(1.1);
-
-        HttpEntity<DetailProduct> request = new HttpEntity<>(detailProduct);
+        Map<String, Object> map = new HashMap<>();
+        map.put("product", Map.of("id", "204"));
+        map.put("weight", "1.1");
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(map);
 
         ResponseEntity<String> response =
                 restTemplate
-                        .exchange("/api/detailproducts/304", HttpMethod.PATCH, request, String.class);
+                        .exchange("/api/detailproducts/304", HttpMethod.PUT, request, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 

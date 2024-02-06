@@ -1,139 +1,98 @@
 package thainguyen.controller;
 
-import org.modelmapper.ModelMapper;
+import jakarta.persistence.NoResultException;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
+import thainguyen.controller.conf.ResponseComponent;
 import thainguyen.domain.Brand;
 import thainguyen.domain.Category;
 import thainguyen.domain.Product;
 import thainguyen.service.brand.BrandService;
 import thainguyen.service.category.CategoryService;
 import thainguyen.service.product.ProductService;
+import thainguyen.utilities.ObjectMapperUtil;
+import thainguyen.utilities.ValidateUtil;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/api/products", produces = "application/json")
-
+@AllArgsConstructor
 public class ProductController {
 
     private final ProductService productService;
     private final CategoryService categoryService;
     private final BrandService brandService;
-    private final ModelMapper modelMapper;
-
-    public ProductController(ProductService productService, CategoryService categoryService
-            , BrandService brandService, ModelMapper modelMapper) {
-
-        this.productService = productService;
-        this.categoryService = categoryService;
-        this.brandService = brandService;
-        this.modelMapper = modelMapper;
-    }
+    private final ValidateUtil validateUtil;
+    private final ObjectMapperUtil objectMapperUtil;
 
     @GetMapping
-    private ResponseEntity<List<Product>> findAll() {
+    private ResponseEntity<ResponseComponent<List<Product>>> findAll() {
         List<Product> products = productService.findAll();
-        if (products.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(products);
+        ResponseComponent<List<Product>> response = ResponseComponent
+                .<List<Product>>builder()
+                .status(HttpStatus.OK)
+                .success(true)
+                .data(products)
+                .build();
+        return new ResponseEntity<>(response, response.getStatus());
     }
 
     @GetMapping(value = "/{id}")
-    private ResponseEntity<Product> findById(@PathVariable  Long id) {
-        return productService.findById(id).map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    private ResponseEntity<ResponseComponent<Product>> findById(@PathVariable Long id) {
+        Product product = productService.findById(id);
+        ResponseComponent<Product> response = ResponseComponent
+                .<Product>builder()
+                .success(true)
+                .status(HttpStatus.OK)
+                .data(product)
+                .build();
+        return new ResponseEntity<>(response, response.getStatus());
     }
 
     @PostMapping(consumes = "application/json")
-    private ResponseEntity<Void> createProduct(@RequestBody Product product,
+    private ResponseEntity<ResponseComponent<Void>> createProduct(@RequestBody @Valid Product product,
                                                UriComponentsBuilder ucb) {
-        if (product.getBrand() == null || product.getCategory() == null) {
-            // update body later
-            return ResponseEntity.badRequest().build();
-        }
-        Optional<Brand> brandOfProduct = brandService.findById(product.getBrand().getId());
-        Optional<Category> categoryProduct = categoryService.findById(product.getCategory().getId());
-        if (brandOfProduct.isPresent() && categoryProduct.isPresent()) {
-            product.setBrand(brandOfProduct.get());
-            product.setCategory(categoryProduct.get());
-            product = productService.create(product);
-            URI location = ucb.path("/api/products/{id}")
-                    .buildAndExpand(product.getId()).toUri();
-            return ResponseEntity.created(location).build();
-        }
-        else {
-            return ResponseEntity.unprocessableEntity().build();
-        }
+
+        Product productSaved = productService.create(product);
+
+        URI locationOfNewProduct = ucb.path("/api/products/{id}")
+                .buildAndExpand(productSaved.getId()).toUri();
+        ResponseComponent<Void> response = ResponseComponent
+                .<Void>builder()
+                .success(true)
+                .status(HttpStatus.CREATED)
+                .message("Create Product success")
+                .build();
+        return ResponseEntity
+                .created(locationOfNewProduct)
+                .body(response);
     }
+
 
     @PutMapping(value = "/{id}", consumes = "application/json")
-    private ResponseEntity<Product> putProduct(@PathVariable Long id,
-                                               @RequestBody Product product) {
+    private ResponseEntity<ResponseComponent<Product>> patchProduct(@PathVariable Long id, @RequestBody Map<String, Object> productMap)
+            throws MethodArgumentNotValidException {
 
-        // Logic hiện tại là put sẽ làm null các thuộc tính quan trọng
-        // Ví dụ put mà lại không truyền id brand hoặc id cateogory thì logic sai nhưng không có lỗi
-        // vì hiện tại updateCategoryAndBrand() chỉ check lỗi ở phần isEmpty
-        if (product.getBrand() == null || product.getCategory() == null) {
-            // update body later
-            return ResponseEntity.badRequest().build();
-        }
+        validateUtil.validate(productMap, Product.class);
+        Product product = (Product) objectMapperUtil.convertMapToEntity(productMap, Product.class);
 
-        product = updateCategoryAndBrand(product);
-        if (product == null) {
-            return ResponseEntity.unprocessableEntity().build();
-        }
-        Product updatedCategory = productService.updateByPut(id, product);
-        if (updatedCategory == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(updatedCategory);
+        Product productSaved = productService.updateProduct(id, product);
+        ResponseComponent<Product> response = ResponseComponent
+                .<Product>builder()
+                .success(true)
+                .status(HttpStatus.OK)
+                .message("Update Product success")
+                .data(productSaved)
+                .build();
+        return new ResponseEntity<>(response, response.getStatus());
     }
 
-    @PatchMapping(value = "/{id}", consumes = "application/json")
-    private ResponseEntity<Product> patchProduct(@PathVariable Long id, @RequestBody Product product) {
-        product = updateCategoryAndBrand(product);
-        if (product == null) {
-            return ResponseEntity.unprocessableEntity().build();
-        }
-        Product productSaved = productService.updateByPatch(id, product);
-        if (productSaved == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(productSaved);
-    }
-
-    public Product updateCategoryAndBrand(Product product) {
-        if (product.getBrand() != null && product.getCategory() != null ) {
-            Optional<Brand> brandOpt = brandService.findById(product.getBrand().getId());
-            Optional<Category> categoryOpt = categoryService.findById(product.getCategory().getId());
-            // non consistency
-            if (brandOpt.isEmpty() || categoryOpt.isEmpty()) {
-                return null;
-            }
-            product.setBrand(brandOpt.get());
-            product.setCategory(categoryOpt.get());
-        }
-        else if (product.getBrand() != null ) {
-            Optional<Brand> brandOfProduct = brandService.findById(product.getBrand().getId());
-            if (brandOfProduct.isEmpty()) {
-                return null;
-            } else {
-                product.setBrand(brandOfProduct.get());
-            }
-        } else if (product.getCategory() != null ) {
-            Optional<Category> categoryOfProduct = categoryService.findById(product.getCategory().getId());
-            if (categoryOfProduct.isEmpty()) {
-                return null;
-            } else {
-                product.setCategory(categoryOfProduct.get());
-            }
-        }
-
-        return product;
-    }
 }

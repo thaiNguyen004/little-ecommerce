@@ -1,12 +1,14 @@
 package thainguyen.domain;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.UpdateTimestamp;
-import thainguyen.domain.valuetypes.Price;
 
 import java.time.LocalDateTime;
 
@@ -24,16 +26,24 @@ public class DetailProduct {
     @Version
     private Long version;
 
-    private @NotNull String name;
+    @NotBlank(message = "Name attribute must not be null and empty!")
+    private String name;
 
     @ManyToOne
-    private @NotNull Size size;
+    @NotNull
+    private Size size;
 
     @ManyToOne
-    private @NotNull Product product;
+    @NotNull
+    private Product product;
 
-    private @NotNull Price price;
-    private @NotNull  Double weight;  // KG
+    @NotNull
+    @Min(value = 1000, message = "Price of detail product required greater than 1000 VND")
+    private Integer price;
+
+    @NotNull
+    @DecimalMin(value = "0.01", message = "Weigh of detail product require greater than 10g")
+    private Double weight;
     private LocalDateTime createdAt;
     @UpdateTimestamp
     private LocalDateTime updatedAt;
@@ -44,7 +54,7 @@ public class DetailProduct {
     }
 
     /*Custom constructor*/
-    public DetailProduct(String name, Double weight, Size size, Price price) {
+    public DetailProduct(String name, Double weight, Size size, int price) {
         this.name = name;
         this.weight = weight;
         this.size = size;

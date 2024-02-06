@@ -3,6 +3,7 @@ package thainguyen.domain;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,17 +29,22 @@ public class Product {
     private Long version;
 
     @ManyToOne
-    private @NotNull Category category;
+    @NotNull
+    private Category category;
 
     @ManyToOne
-    private @NotNull Brand brand;
+    @NotNull
+    private Brand brand;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "product")
     @JsonIgnore
     private List<DetailProduct> detailProducts = new ArrayList<>();
 
-    private @NotNull String name;
+    @NotBlank(message = "Name attribute must not be null and empty!")
+    private String name;
+
     private String description;
+
     private String picture;
 
     @JsonFormat(pattern = "dd/MM/yyyy")

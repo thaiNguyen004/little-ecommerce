@@ -3,52 +3,51 @@ package thainguyen.service.product;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
 import thainguyen.data.ProductRepository;
+import thainguyen.domain.Brand;
+import thainguyen.domain.Category;
 import thainguyen.domain.Product;
+import thainguyen.service.brand.BrandService;
+import thainguyen.service.category.CategoryService;
 import thainguyen.service.generic.GenericServiceImpl;
-
-import java.util.Optional;
 
 @Service
 public class ProductServiceImpl extends GenericServiceImpl<Product> implements ProductService {
     private final ProductRepository repo;
+    private final CategoryService categoryService;
+    private final BrandService brandService;
 
-    public ProductServiceImpl(EntityManager em, ProductRepository repo) {
+    public ProductServiceImpl(EntityManager em, ProductRepository repo
+            , BrandService brandService, CategoryService categoryService) {
         super(em, Product.class);
         this.repo = repo;
+        this.brandService = brandService;
+        this.categoryService = categoryService;
     }
 
     @Override
     public Product create(Product product) {
+        Brand brand = brandService.findById(product.getBrand().getId());
+        Category category = categoryService.findById(product.getCategory().getId());
+        product.setBrand(brand);
+        product.setCategory(category);
         return repo.save(product);
     }
 
     @Override
-    public Product updateByPut(Long id, Product product) {
-        Optional<Product> productPersist = repo.findById(id);
-        return productPersist.map(p -> {
-            product.setId(id);
-            product.setVersion(p.getVersion());
-            return repo.save(product);
-        }).orElseGet(() -> null);
-    }
-
-    @Override
-    public Product updateByPatch(Long id, Product productChanged) {
-        Optional<Product> productPersist = repo.findById(id);
-        return productPersist.map(product -> {
-            if (productChanged.getName() != null) {
-                product.setName(productChanged.getName());
-            }
-            if (productChanged.getDescription() != null) {
-                product.setDescription(productChanged.getDescription());
-            }
-            if (productChanged.getBrand() != null) {
-                product.setBrand(productChanged.getBrand());
-            }
-            if (productChanged.getCategory() != null) {
-                product.setCategory(productChanged.getCategory());
-            }
-            return repo.save(product);
-        }).orElseGet(() -> null);
+    public Product updateProduct(Long id, Product productChanged) {
+        Product productPersist = findById(id);
+        if (productChanged.getName() != null) {
+            productPersist.setName(productChanged.getName());
+        }
+        if (productChanged.getDescription() != null) {
+            productPersist.setDescription(productChanged.getDescription());
+        }
+        if (productChanged.getBrand() != null) {
+            productPersist.setBrand(brandService.findById(productChanged.getBrand().getId()));
+        }
+        if (productChanged.getCategory() != null) {
+            productPersist.setCategory(categoryService.findById(productChanged.getCategory().getId()));
+        }
+        return repo.save(productPersist);
     }
 }
