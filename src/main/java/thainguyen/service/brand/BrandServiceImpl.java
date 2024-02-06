@@ -29,25 +29,16 @@ public class BrandServiceImpl extends GenericServiceImpl<Brand> implements Brand
         return repo.save(brand);
     }
 
-    @Override
-    public Brand updateByPut(Long id, Brand brand) {
-        return repo.findById(id).map(b -> {
-            brand.setVersion(b.getVersion());
-            brand.setId(id);
-            return repo.save(brand);
-        }).orElseGet(() -> null);
-    }
 
     @Override
-    public Brand updateByPatch(Long id, Brand brand) {
-        return repo.findById(id).map(b -> {
-            if (brand.getName() != null) {
-                b.setName(brand.getName());
-            }
-            if (brand.getLogo() != null) {
-                b.setLogo(brand.getLogo());
-            }
-            return repo.save(b);
-        }).orElseGet(() -> null);
+    public Brand updateBrand(Long id, Brand brand) {
+        Brand brandPersist = findById(id);
+        if (brand.getName() != null) {
+            brandPersist.setName(brand.getName());
+        }
+        if (brand.getLogo() != null) {
+            brandPersist.setLogo(brand.getLogo());
+        }
+        return repo.save(brandPersist);
     }
 }

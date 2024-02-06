@@ -1,12 +1,15 @@
 package thainguyen.service.category;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import thainguyen.data.CategoryRepository;
 import thainguyen.domain.Category;
 import thainguyen.service.generic.GenericServiceImpl;
 
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.Optional;
 
 @Service
@@ -21,36 +24,34 @@ public class CategoryServiceImpl extends GenericServiceImpl<Category> implements
     }
 
     @Override
-    public Category create(Category category) {
+    public Category create(Category category) throws SQLIntegrityConstraintViolationException, IllegalArgumentException {
+        boolean isExist = repo.existsByName(category.getName());
+        if (isExist) {
+            throw new SQLIntegrityConstraintViolationException("Category with name = " + category.getName() + " already existed");
+        }
+        if (category.getParent() != null) {
+            Category parent = findById(category.getParent().getId());
+            category.setParent(parent);
+        }
         return repo.save(category);
     }
 
     @Override
-    public Category updateByPut(Long id, Category categoryUpdate) {
-        return repo.findById(id).map(category -> {
-            categoryUpdate.setVersion(category.getVersion());
-            categoryUpdate.setId(id);
-            return repo.save(categoryUpdate);
-        }).orElseGet(() -> null);
+    public Category updateCategory(Long id, Category categoryPatch) throws IllegalArgumentException  {
+        Category categoryPersist = findById(id);
+        if (categoryPatch.getName() != null) {
+            categoryPersist.setName(categoryPatch.getName());
+        }
+        if (categoryPatch.getPicture() != null) {
+            categoryPersist.setPicture(categoryPatch.getPicture());
+        }
+        if (categoryPatch.getDescription() != null) {
+            categoryPersist.setDescription(categoryPatch.getDescription());
+        }
+        if (categoryPatch.getParent() != null) {
+            categoryPersist.setParent(findById(categoryPatch.getParent().getId()));
+        }
+        return repo.save(categoryPersist);
     }
 
-
-    @Override
-    public Category updateByPatch(Long id, Category categoryPatch) {
-        return repo.findById(id).map(category -> {
-            if (categoryPatch.getName() != null) {
-                category.setName(categoryPatch.getName());
-            }
-            if (categoryPatch.getPicture() != null) {
-                category.setPicture(categoryPatch.getPicture());
-            }
-            if (categoryPatch.getDescription() != null) {
-                category.setDescription(categoryPatch.getDescription());
-            }
-            if (categoryPatch.getParent() != null) {
-                category.setParent(categoryPatch.getParent());
-            }
-            return repo.save(category);
-        }).orElseGet(() -> null);
-    }
 }
