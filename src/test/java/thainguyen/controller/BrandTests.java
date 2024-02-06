@@ -15,6 +15,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import thainguyen.domain.Brand;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Slf4j
@@ -23,7 +25,8 @@ public class BrandTests {
     @Autowired
     TestRestTemplate restTemplate;
 
-    /*GET: Get Brand by id success*/
+//GET: Get Brand by id success
+
     @Test
     void shouldReturnABrandWhenIFindById() {
         ResponseEntity<String> response =
@@ -33,14 +36,15 @@ public class BrandTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         DocumentContext doc = JsonPath.parse(response.getBody());
-        Number id = doc.read("$.id");
-        String name = doc.read("$.name");
+        Number id = doc.read("$.data.id");
+        String name = doc.read("$.data.name");
         assertThat(id).isEqualTo(102);
         assertThat(name).isEqualTo("gucci");
     }
 
 
-    /*GET: Brand with that id not found in database*/
+//GET: Brand with that id not found in database
+
     @Test
     void shouldReturnNotFoundStatusWhenIdDoesNotExist() {
         ResponseEntity<String> response =
@@ -51,7 +55,8 @@ public class BrandTests {
     }
 
 
-    /*GET:Get Brand by Id,  Brand Unauthorized*/
+//GET:Get Brand by Id,  Brand Unauthorized
+
     @Test
     void shouldReturn403WhenGetThatNotAuthenticated() {
         ResponseEntity<String> unauthorized =
@@ -60,7 +65,8 @@ public class BrandTests {
     }
 
 
-    /*GET: Get all Brands success*/
+//GET: Get all Brands success
+
     @Test
     void shouldReturnListWhenFindAll() {
         ResponseEntity<String> response = restTemplate
@@ -75,7 +81,8 @@ public class BrandTests {
 
 
 
-    /*GET: Get all Brands, Brand Unauthorized*/
+//GET: Get all Brands, Brand Unauthorized
+
     @Test
     void shouldReturnUnauthorizedWhenGetListBrandButNotLogin() {
         ResponseEntity<String> response = restTemplate
@@ -84,7 +91,8 @@ public class BrandTests {
     }
 
 
-    /*POST Brand: Create Brand success */
+//POST Brand: Create Brand success
+
     @Test
     @DirtiesContext
     void shouldReturnANewBrandWhenDataIsSaved() {
@@ -103,15 +111,16 @@ public class BrandTests {
 
         assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         DocumentContext doc = JsonPath.parse(getResponse.getBody());
-        String name = doc.read("$.name");
-        String logo = doc.read("$.logo");
+        String name = doc.read("$.data.name");
+        String logo = doc.read("$.data.logo");
 
         assertThat(name).isEqualTo("dior");
         assertThat(logo).isEqualTo("link picture for dior");
     }
 
 
-    /*POST Brand: Forbiden because cridential info is bad*/
+//POST Brand: Forbiden because cridential info is bad
+
     @Test
     @DirtiesContext
     void attemptPostNewBrandWithBadCridential() {
@@ -125,7 +134,8 @@ public class BrandTests {
     }
 
 
-    /*POST Brand: Bad request because info is null */
+//POST Brand: Bad request because info is null
+
     @Test
     @DirtiesContext
     void attemptPostNewBrandButMissingInfoImportant() {
@@ -138,7 +148,8 @@ public class BrandTests {
     }
 
 
-    /*POST Brand: Unauthorized */
+//POST Brand: Unauthorized
+
     @Test
     @DirtiesContext
     void attemptPostNewBrandButNotLogin() {
@@ -150,18 +161,17 @@ public class BrandTests {
     }
 
 
-    /*PUT Brand: Update Brand success*/
+//PUT Brand: Update Brand success
+
     @Test
     @DirtiesContext
     void shouldReturnOKDataIsPutted() {
-        Brand brandShouldUpdate =
-                new Brand();
-        brandShouldUpdate.setName("gucci 2");
-        brandShouldUpdate.setLogo(null);
-        HttpEntity<Brand> request = new HttpEntity<>(brandShouldUpdate);
-        ResponseEntity<Brand> response = restTemplate
+        Map<String, Object> brandMap = new HashMap<>();
+        brandMap.put("name", "gucci 2");
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(brandMap);
+        ResponseEntity<String> response = restTemplate
                 .withBasicAuth("employee", "password")
-                .exchange("/api/brands/102", HttpMethod.PUT, request, Brand.class);
+                .exchange("/api/brands/102", HttpMethod.PUT, request, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         ResponseEntity<String> getResponse = restTemplate
@@ -169,19 +179,19 @@ public class BrandTests {
                 .getForEntity("/api/brands/102", String.class);
 
         DocumentContext doc = JsonPath.parse(getResponse.getBody());
-        String name = doc.read("$.name");
-        String logo = doc.read("$.logo");
+        String name = doc.read("$.data.name");
+        String logo = doc.read("$.data.logo");
         assertThat(name).isEqualTo("gucci 2");
-        assertThat(logo).isNull();
     }
 
 
-    /*PUT: Brand with that id not found in database*/
+//PUT: Brand with that id not found in database
+
     @Test
     void shouldReturn404WhenPutDataNotExist() {
-        Brand attemptUpdate = new Brand();
-        attemptUpdate.setName("attempt update");
-        HttpEntity<Brand> request = new HttpEntity<>(attemptUpdate);
+        Map<String, Object> brandMap = new HashMap<>();
+        brandMap.put("name", "gucci 2");
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(brandMap);
         ResponseEntity<Brand> response = restTemplate
                 .withBasicAuth("employee", "password")
                 .exchange("/api/brands/90000", HttpMethod.PUT, request, Brand.class);
@@ -189,7 +199,8 @@ public class BrandTests {
     }
 
 
-    /*PUT Brand: Bad Cridential*/
+//PUT Brand: Bad Cridential
+
     @Test
     void shouldReturn403WhenPutBrandThatBadCridential() {
         Brand attemptUpdate = new Brand();
@@ -201,7 +212,8 @@ public class BrandTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
-    /*PUT Brand: Unauthorized*/
+//PUT Brand: Unauthorized
+
     @Test
     void attemptPutBrandButNotLogin() {
         Brand attemptUpdate = new Brand();
@@ -212,77 +224,5 @@ public class BrandTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
-
-    /*Patch Brand: Update Brand success*/
-    @Test
-    void shouldReturnOKWhenDataIsPatched() {
-        Brand brandShouldUpdate =
-                new Brand();
-        brandShouldUpdate.setName(null);
-        brandShouldUpdate.setLogo("logo is changed");
-        HttpEntity<Brand> request = new HttpEntity<>(brandShouldUpdate);
-        ResponseEntity<Brand> response = restTemplate
-                .withBasicAuth("employee", "password")
-                .exchange("/api/brands/102", HttpMethod.PATCH, request, Brand.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        ResponseEntity<String> getResponse = restTemplate
-                .withBasicAuth("employee", "password")
-                .getForEntity("/api/brands/102", String.class);
-        DocumentContext doc = JsonPath.parse(getResponse.getBody());
-
-        Number id = doc.read("$.id");
-        String name = doc.read("$.name");
-        String logo = doc.read("$.logo");
-
-        assertThat(id).isEqualTo(102);
-        assertThat(name).isEqualTo("gucci");
-        assertThat(logo).isEqualTo("logo is changed");
-    }
-
-
-    /*PATCH Brand: Brand with that id not found in database*/
-    @Test
-    void shouldReturn404WhenIdentifierIsNotFound() {
-        Brand brandShouldUpdate = new Brand();
-        brandShouldUpdate.setName(null);
-        brandShouldUpdate.setLogo("logo is changed");
-        HttpEntity<Brand> request = new HttpEntity<>(brandShouldUpdate);
-        ResponseEntity<Brand> response = restTemplate
-                .withBasicAuth("employee", "password")
-                .exchange("/api/brands/99999", HttpMethod.PATCH, request, Brand.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    }
-
-
-    /*PATCH Brand: Bad Cridential*/
-    @Test
-    void attemptPatchBrandWithBadCridential() {
-        Brand brandShouldUpdate = new Brand();
-        brandShouldUpdate.setName("new name");
-        brandShouldUpdate.setLogo("logo is changed");
-        HttpEntity<Brand> request = new HttpEntity<>(brandShouldUpdate);
-        ResponseEntity<Brand> response = restTemplate
-                .withBasicAuth("customer", "password")
-                .exchange("/api/brands/102", HttpMethod.PATCH, request, Brand.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    }
-
-
-    /*PATCH Brand: Unauthorized*/
-    @Test
-    void attemptPatchBrandButNotLogin() {
-        Brand brandShouldUpdate = new Brand();
-        brandShouldUpdate.setName("new name");
-        brandShouldUpdate.setLogo("logo is changed");
-        HttpEntity<Brand> request = new HttpEntity<>(brandShouldUpdate);
-        ResponseEntity<Brand> response = restTemplate
-                .exchange("/api/brands/102", HttpMethod.PATCH, request, Brand.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-    }
 
 }

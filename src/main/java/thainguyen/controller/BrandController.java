@@ -74,8 +74,11 @@ public class BrandController {
 
 
     @PutMapping(value = "/{id}", consumes = "application/json")
-    private ResponseEntity<ResponseComponent<Brand>> updateBrand(@PathVariable Long id, @RequestBody Map<String, Object> brandPatch)
+    private ResponseEntity<ResponseComponent<Brand>> updateBrand(@PathVariable Long id,
+                                                                 @RequestBody Map<String, Object> brandPatch)
             throws MethodArgumentNotValidException {
+
+        System.out.println("udpate " + brandPatch);
 
         validateUtil.validate(brandPatch, Brand.class);
         Brand brand = (Brand) objectMapperUtil.convertMapToEntity(brandPatch, Brand.class);
