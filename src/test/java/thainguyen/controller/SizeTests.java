@@ -12,7 +12,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.transaction.annotation.Transactional;
 import thainguyen.data.SizeRepository;
 import thainguyen.domain.Brand;
 import thainguyen.domain.Category;
@@ -97,7 +96,7 @@ public class SizeTests {
     @DirtiesContext
     void attemptCreateAnSizeSuccess() {
         Size newSize = new Size();
-        newSize.setName(Size.Type.XL);
+        newSize.setName(Size.Name.XL);
         newSize.setWidth(200);
         newSize.setChest(100);
         newSize.setLength(400);
@@ -133,7 +132,7 @@ public class SizeTests {
     @DirtiesContext
     void attemptCreateAnSizeFailDueBadCridential() {
         Size newSize = new Size();
-        newSize.setName(Size.Type.XL);
+        newSize.setName(Size.Name.XL);
         newSize.setWidth(200);
         newSize.setChest(100);
         newSize.setLength(400);
@@ -155,7 +154,7 @@ public class SizeTests {
     @DirtiesContext
     void attemptCreateAnSizeFailDueBrandOrCategoryNotFound() {
         Size newSize = new Size();
-        newSize.setName(Size.Type.XL);
+        newSize.setName(Size.Name.XL);
         newSize.setWidth(200);
         newSize.setChest(100);
         newSize.setLength(400);
@@ -200,7 +199,7 @@ public class SizeTests {
     @DirtiesContext
     void attemptCreateAnSizeButNotLogin() {
         Size newSize = new Size();
-        newSize.setName(Size.Type.XL);
+        newSize.setName(Size.Name.XL);
         newSize.setWidth(200);
         newSize.setChest(100);
         newSize.setLength(400);

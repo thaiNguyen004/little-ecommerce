@@ -3,10 +3,12 @@ package thainguyen.controller.conf;
 import jakarta.persistence.NoResultException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.core.convert.ConversionFailedException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
@@ -175,7 +177,8 @@ public class CustomRestExceptionHandler
     }
 
     @ExceptionHandler(NoResultException.class)
-    public ResponseEntity<?> handleNoResultException(final NoResultException ex, final WebRequest request) {
+    public ResponseEntity<?> handleNoResultException(final NoResultException ex,
+                                                     final WebRequest request) {
         ResponseComponent<?> responseComponent = ResponseComponent.builder()
                 .success(true)
                 .status(HttpStatus.NOT_FOUND)
@@ -187,11 +190,37 @@ public class CustomRestExceptionHandler
 
 
     /*500*/
-    @ExceptionHandler({ NullPointerException.class, IllegalArgumentException.class, IllegalStateException.class })
-    public ResponseEntity<Object> handleInternal(final RuntimeException ex, final WebRequest request) {
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Object> handleLoadDataWithIdNull(final RuntimeException ex,
+                                                           final WebRequest request) {
+
         ResponseComponent<?> responseComponent = ResponseComponent.builder()
                 .success(false)
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .status(HttpStatus.BAD_REQUEST)
+                .message(ex.getMessage())
+                .build();
+        return handleExceptionInternal(ex, responseComponent, new HttpHeaders(),
+                responseComponent.getStatus(), request);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
+                                                                  HttpHeaders headers,
+                                                                  HttpStatusCode status,
+                                                                  WebRequest request) {
+        ResponseComponent<?> responseComponent = ResponseComponent.builder()
+                .status(HttpStatus.BAD_REQUEST)
+                .success(false)
+                .message(ex.getMessage())
+                .build();
+        return handleExceptionInternal(ex, responseComponent, new HttpHeaders(), responseComponent.getStatus(), request);
+    }
+
+    @ExceptionHandler(ConversionFailedException.class)
+    public ResponseEntity<Object> handleConversionFailedException(final ConversionFailedException ex, WebRequest request) {
+        ResponseComponent<?> responseComponent = ResponseComponent.builder()
+                .status(HttpStatus.BAD_REQUEST)
+                .success(false)
                 .message(ex.getMessage())
                 .build();
         return handleExceptionInternal(ex, responseComponent, new HttpHeaders(), responseComponent.getStatus(), request);

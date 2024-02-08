@@ -3,7 +3,7 @@ package thainguyen.domain;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,10 +19,15 @@ public class Address {
     @GeneratedValue(generator = SEQUENCE_GENERATOR)
     private Long id;
 
+    @NotBlank(message = "phoneNumber attribute must not be null")
     private String phoneNumber;
-    private @NotNull String province;
-    private @NotNull String district;
-    private @NotNull String ward;
+    @NotBlank(message = "province attribute must not be null")
+    private String province;
+    @NotBlank(message = "district attribute must not be null")
+    private String district;
+    @NotBlank(message = "ward attribute must not be null")
+    private String ward;
+    @NotBlank(message = "detailAddress attribute must not be null")
     private String detailAddress;
 
     /*Custom constructor*/

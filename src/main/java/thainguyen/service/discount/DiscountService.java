@@ -1,12 +1,15 @@
 package thainguyen.service.discount;
 
+import thainguyen.controller.exception.DiscountInvalidException;
 import thainguyen.domain.Discount;
 import thainguyen.service.generic.GenericService;
 
+import java.sql.SQLIntegrityConstraintViolationException;
+
 public interface DiscountService extends GenericService<Discount> {
-    Discount create(Discount discount);
+    Discount create(Discount discount) throws SQLIntegrityConstraintViolationException;
 
-    Discount updateByPut(Long id, Discount discount);
+    Discount updateDiscount(Long id, Discount discount) throws DiscountInvalidException;
 
-    Discount updateByPatch(Long id, Discount discount);
+    void checkDiscount(Discount discount) throws DiscountInvalidException;
 }

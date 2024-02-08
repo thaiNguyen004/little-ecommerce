@@ -3,12 +3,13 @@ package thainguyen.domain;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.UpdateTimestamp;
-import thainguyen.domain.converter.PriceConverter;
-import thainguyen.domain.valuetypes.Price;
 import thainguyen.domain.valuetypes.Status;
 
 import java.time.LocalDateTime;
@@ -31,9 +32,14 @@ public class Order {
     private User user;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "order", cascade = CascadeType.PERSIST)
+    @NotNull(message = "lineItems must not be null")
+    @Size(min = 1, message = "Minimum of list lineItems is 1")
+    @Valid
     private List<LineItem> lineItems = new ArrayList<>();
 
-    @OneToOne(fetch = FetchType.EAGER, optional = false, cascade = CascadeType.PERSIST)
+    @OneToOne(cascade = CascadeType.PERSIST)
+    @NotNull(message = "address of the order must not be null")
+    @Valid
     private Address address;
 
     @OneToOne(cascade = CascadeType.PERSIST)
@@ -47,16 +53,15 @@ public class Order {
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<Discount> discounts = new ArrayList<>();
 
-    @Convert(converter = PriceConverter.class)
-    private Price totalPriceBeforeDiscount;
-
-    @Convert(converter = PriceConverter.class)
-    private Price totalPriceAfterDiscount;
+    private Integer totalPriceBeforeDiscount;
+    private Integer totalPriceAfterDiscount;
 
     @Enumerated(EnumType.STRING)
     private Status status;
+
     @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDateTime placedAt;
+
     @UpdateTimestamp
     @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDateTime modifiedAt;

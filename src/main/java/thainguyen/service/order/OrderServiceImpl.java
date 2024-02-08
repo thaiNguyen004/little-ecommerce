@@ -3,61 +3,96 @@ package thainguyen.service.order;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import thainguyen.controller.exception.GhtkCreateOrderFailedException;
 import thainguyen.data.OrderRepository;
-import thainguyen.data.UserRepository;
-import thainguyen.domain.Constants;
-import thainguyen.domain.Order;
+import thainguyen.domain.*;
 import thainguyen.domain.valuetypes.Status;
 import thainguyen.dto.ghtk.GhtkForm;
+import thainguyen.service.detailproduct.DetailProductService;
+import thainguyen.service.discount.DiscountService;
 import thainguyen.service.generic.GenericServiceImpl;
+import thainguyen.service.user.UserService;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImpl extends GenericServiceImpl<Order>
         implements OrderService {
 
     private final OrderRepository orderRepo;
-    private final UserRepository userRepo;
+    private final UserService userService;
+    private final DetailProductService dpService;
+    private final DiscountService discountService;
     private final RestTemplate restTemplate = new RestTemplate();
 
     public OrderServiceImpl(EntityManager em
             , OrderRepository orderRepo
-            , UserRepository userRepo) {
+            , UserService userService
+            , DetailProductService dpService
+            , DiscountService discountService) {
 
         super(em, Order.class);
         this.orderRepo = orderRepo;
-        this.userRepo = userRepo;
+        this.userService = userService;
+        this.dpService = dpService;
+        this.discountService = discountService;
     }
 
     @Override
     public List<Order> findByOwner(String username) {
-        return userRepo.findByUsername(username).map(user ->
-                orderRepo.findByUser(user.getUsername())).orElseGet(() -> null);
+        List<Order> orders = orderRepo.findByUsername(username);
+        if(orders.isEmpty()) {
+            throw new NoResultException("Order placed by " + username + " not found");
+        }
+        return orders;
     }
 
     @Override
-    public Optional<Order> findByIdAndOwner(Long id, String username) {
-        return userRepo.findByUsername(username).map(user -> {
-            return orderRepo.findByIdAndUser(id, user.getUsername());
-        }).orElseGet(() -> null);
+    public Order findByIdAndOwner(Long id, String username) {
+        Optional<Order> orderOpt = orderRepo.findByIdAndUsername(id, username);
+        return orderOpt.orElseThrow(() ->
+                new NoResultException("No found order with id = "
+                        + id + " and username = " + username));
     }
 
     @Override
     public Order create(Order order, String username) {
-        return userRepo.findByUsername(username).map(user -> {
-            order.setUser(user);
-            return orderRepo.save(order);
-        }).orElseGet(() -> null);
+        User user = userService.findByUsername(username);
+        order.setUser(user);
+        // add line items
+        order.setLineItems(order.getLineItems()
+                .stream().map(lineItem -> {
+                    LineItem lt = new LineItem();
+                    lt.setQuantity(lineItem.getQuantity());
+                    DetailProduct detailProduct = dpService.findById(lineItem.getDetailProduct().getId());
+                    lt.setDetailProduct(detailProduct);
+                    lt.setAmount(detailProduct.getPrice());
+
+                    // calc total price and total weight
+                    lt.setTotalPrice(lt.getQuantity() * lt.getAmount());
+                    lt.setTotalWeight(lt.getQuantity() * detailProduct.getWeight());
+
+                    lt.setOrder(order);
+                    return lt;
+                }).collect(Collectors.toList()));
+
+        // add discount if exist
+        if (order.getDiscounts() != null && !order.getDiscounts().isEmpty()) {
+            order.setDiscounts(order.getDiscounts().stream().map(discount ->
+                    discountService.findById(discount.getId())).collect(Collectors.toList()));
+        }
+        return orderRepo.save(order);
     }
+
 
     @Override
     public Order create(Order order) {
@@ -65,23 +100,20 @@ public class OrderServiceImpl extends GenericServiceImpl<Order>
     }
 
     @Override
-    public boolean cancel(Long orderId) {
+    public void cancel(String orderId) throws GhtkCreateOrderFailedException {
         UriComponentsBuilder builder = UriComponentsBuilder
-                .fromUriString(Constants.URI_GHTK_ORDER_CANCEL + "/partner_id:" + orderId +"q");
+                .fromUriString(Constants.URI_GHTK_ORDER_CANCEL + "/partner_id:" + orderId);
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Token", Constants.TOKEN);
+            HttpEntity<GhtkForm> request = new HttpEntity<>(null, headers);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Token", Constants.TOKEN);
-        HttpEntity<GhtkForm> request = new HttpEntity<>(null, headers);
-
-        ResponseEntity<String> requestCancelling = restTemplate
-                .postForEntity(builder.toUriString(), request, String.class);
-        System.out.println(requestCancelling.getBody());
-        DocumentContext documentContext = JsonPath.parse(requestCancelling.getBody());
-        Boolean isSuccess = documentContext.read("$.success");
-        if (isSuccess) {
-            updateStatus(orderId, Status.CANCEL);
+            restTemplate.postForEntity(builder.toUriString(), request, String.class);
+        } catch (HttpClientErrorException ex) {
+            DocumentContext documentContext = JsonPath.parse(ex.getResponseBodyAsString());
+            String message = documentContext.read("$.message");
+            throw new GhtkCreateOrderFailedException(message);
         }
-        return isSuccess;
     }
 
     @Override

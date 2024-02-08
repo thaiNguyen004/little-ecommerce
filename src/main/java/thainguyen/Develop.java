@@ -4,6 +4,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import thainguyen.data.*;
 import thainguyen.domain.*;
 import thainguyen.domain.valuetypes.Price;
@@ -17,6 +18,7 @@ import java.util.Currency;
 public class Develop {
 
     @Bean
+    @Transactional
     public CommandLineRunner data (BrandRepository brandRepo,
                                    CategoryRepository categoryRepo,
                                    ProductRepository productRepo,
@@ -29,19 +31,19 @@ public class Develop {
                                    OrderRepository orderRepo,
                                    LineItemRepository lineItemRepo) {
         return args -> {
-            User admin = new User("admin", encoder.encode("password"), "email@example.com"
-                    , "Nguyen admin", "male", 19, "link avatar", "ADMIN");
+            User admin = new User("admin", encoder.encode("password"), "email@example1.com"
+                    , "Nguyen admin", "male", 19, "link avatar", User.Position.ADMIN);
             Address adminAddress = new Address("0336514962", "Phú Thọ", "Hạ Hòa", "Yên Kỳ", "Khu 14");
             admin.getAddresses().add(adminAddress);
             userRepo.save(admin);
             User employee = new User("employee", encoder.encode("password"), "nguyenntph33935@fpt.edu.com"
-                    , "Nguyen employee", "male", 19, "link avatar", "EMPLOYEE");
+                    , "Nguyen employee", "male", 19, "link avatar", User.Position.EMPLOYEE);
             userRepo.save(employee);
-            User customer1 = new User("customer", encoder.encode("password"), "email@example.com"
-                    , "Nguyen customer", "female", 19, "link avatar", "CUSTOMER");
+            User customer1 = new User("customer", encoder.encode("password"), "email@example2.com"
+                    , "Nguyen customer", "female", 19, "link avatar", User.Position.CUSTOMER);
             userRepo.save(customer1);
-            User customer2 = new User("customer2", encoder.encode("password"), "email@example.com"
-                    , "Nguyen customer2", "male", 23, "link avatar", "CUSTOMER");
+            User customer2 = new User("customer2", encoder.encode("password"), "email@example3.com"
+                    , "Nguyen customer2", "male", 23, "link avatar", User.Position.CUSTOMER);
             userRepo.save(customer2);
 
             Brand brand1 = new Brand("gucci", "link picture of gucci");
@@ -52,13 +54,13 @@ public class Develop {
 
             Category category1 = new Category("shirt", "link picture of shirt",
                     "description of shirt", null);
-            categoryRepo.save(category1);
+            Category categoryMerge = categoryRepo.save(category1);
             Category category2 = new Category("pants", "link picture of pants",
                     "description of pants", null);
-            categoryRepo.save(category2);
+            category2 = categoryRepo.save(category2);
             Category category3 = new Category("short pants", "link picture of short pants",
                     "description of shirt", category1);
-            categoryRepo.save(category3);
+            category3 = categoryRepo.save(category3);
 
             Product product1 = new Product(category1, brand1, "Gucci shirt",
                     "picture of product 1", "Description of Gucci shirt");
@@ -76,31 +78,31 @@ public class Develop {
                     "picture of product 4", "Description of Louis Vuitton shirt");
             productRepo.save(product4);
 
-            Size sizeM = new Size(Size.Type.M, 15, 20, 10);
+            Size sizeM = new Size(Size.Name.M, 15, 20, 10);
             sizeM.setCategory(category1);
             sizeM.setBrand(brand1);
             sizeRepo.save(sizeM);
 
-            Size sizeS = new Size(Size.Type.S, 6, 10, 5);
+            Size sizeS = new Size(Size.Name.S, 6, 10, 5);
             sizeS.setCategory(category2);
             sizeS.setBrand(brand1);
             sizeRepo.save(sizeS);
 
             DetailProduct detailProduct1 = new DetailProduct("detail product 1 with size S", 1.1, sizeS
-                    , new Price(BigDecimal.valueOf(60000l), Currency.getInstance("VND")));
+                    , 60000);
             detailProduct1.setProduct(product3);
             detailProduct1.setWeight(1.1);
             detailProductRepo.save(detailProduct1);
 
 
             DetailProduct detailProduct2 = new DetailProduct("detail product 2 with size S", 0.5, sizeS
-                    , new Price(BigDecimal.valueOf(120000l), Currency.getInstance("VND")));
+                    , 120000);
             detailProduct2.setProduct(product1);
             detailProductRepo.save(detailProduct2);
 
 
             DetailProduct detailProduct3 = new DetailProduct("detail product 3 with size M", 1222.25, sizeM,
-                    new Price(BigDecimal.valueOf(15555l), Currency.getInstance("EUR")));
+                    15555);
             detailProduct3.setProduct(product2);
             detailProductRepo.save(detailProduct3);
 
@@ -121,6 +123,9 @@ public class Develop {
                     , LocalDateTime.of(2024, 01, 25, 00, 00, 00)
                     , LocalDateTime.of(2024, 02, 25, 00, 00, 00));
 
+            LineItem lineItem1 = new LineItem(detailProduct1, 2);
+            LineItem lineItem2 = new LineItem(detailProduct2, 3);
+
             Order order1 = new Order();
             order1.addDiscount(discount);
             order1.addDiscount(discount2);
@@ -132,16 +137,6 @@ public class Develop {
                             , "Bắc Từ Liêm"
                             , "Cầu Diễn"
                             , "Số 12"));
-            orderRepo.save(order1);
-
-            LineItem lineItem1 = new LineItem(detailProduct1, 2);
-            lineItem1.setOrder(order1);
-            lineItemRepo.save(lineItem1);
-
-            LineItem lineItem2 = new LineItem(detailProduct2, 3);
-            lineItem2.setOrder(order1);
-            lineItemRepo.save(lineItem2);
-
             order1.addLineItem(lineItem1);
             order1.addLineItem(lineItem2);
             orderRepo.save(order1);

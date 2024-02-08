@@ -3,16 +3,14 @@ package thainguyen.service.user;
 import thainguyen.domain.User;
 import thainguyen.service.generic.GenericService;
 
-import java.util.Optional;
+import java.sql.SQLIntegrityConstraintViolationException;
 
 public interface UserService extends GenericService<User> {
 
-    Optional<User> findByUsername(String username);
+    User findByUsername(String username);
 
-    User create (User user);
+    User create (User user) throws SQLIntegrityConstraintViolationException;
 
-    User updateByPut(Long id, User user);
-
-    User updateByPatch(Long id, User user);
+    User updateUser(Long id, User user);
 
 }
