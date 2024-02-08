@@ -27,7 +27,7 @@ public class OrderTests {
     @Autowired
     OrderRepository repo;
 
-    //    GET: find by id - success
+    //    GET: find by id - success(OK)
     @Test
     void attemptFindOrderByIdSuccess() {
         ResponseEntity<String> response = restTemplate
@@ -52,7 +52,7 @@ public class OrderTests {
     }
 
 
-    //    GET: find by id - fail - not found
+    //    GET: find by id - fail(NOT_FOUND) - id not found in database or not own
     @Test
     void attemptFindOrderNotFound() {
         ResponseEntity<String> response = restTemplate
@@ -61,17 +61,7 @@ public class OrderTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
-
-    //    GET: find by id - fail - not own
-    @Test
-    void shouldReturn404WhenFindByIdButNotOwner() {
-        ResponseEntity<String> response = restTemplate
-                .withBasicAuth("customer2", "password")
-                .getForEntity("/api/orders/352", String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    }
-
-    //    GET: find by id - fail - unauthorized
+    //    GET: find by id - fail(UNAUTHORIZED) - not login
     @Test
     void attemptFindOrderByIdButNotLogin() {
         ResponseEntity<String> response = restTemplate
@@ -79,7 +69,7 @@ public class OrderTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
-    //    GET: find all - success
+    //    GET: find all - success(OK)
     @Test
     void attemptFindAllOrdersSuccess() {
         ResponseEntity<String> response = restTemplate
@@ -93,7 +83,7 @@ public class OrderTests {
     }
 
 
-    //    GET: find all - fail - not found
+    //    GET: find all - fail(NOT_FOUND) - id not found in database or not own
     @Test
     void attemptFindAllOrdersButNotOwn() {
         ResponseEntity<String> response = restTemplate
@@ -103,7 +93,7 @@ public class OrderTests {
     }
 
 
-    //    GET: find all - fail - unauthorized
+    //    GET: find all - fail(UNAUTHORIZED) - not login
     @Test
     void attemptFindAllButNotLogin() {
         ResponseEntity<String> response = restTemplate
@@ -111,7 +101,7 @@ public class OrderTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
-    //    POST: create a new order - success
+    //    POST: create a new order - success(CREATED)
     @Test
     @DirtiesContext
     void shouldCreateOrderSuccess() {
@@ -166,7 +156,7 @@ public class OrderTests {
     }
 
 
-    //    POST: create a new order - fail - ghtk throw error
+    //    POST: create a new order - fail(UNPROCESSABLE_ENTITY) - partnership throw error
     @Test
     void shouldReturn422WhenInsertAnOrderButErrorUnexpected() {
         Order order = new Order();
@@ -205,7 +195,7 @@ public class OrderTests {
     }
 
 
-    //    POST: create a new order - fail - info not found
+    //    POST: create a new order - fail(NOT_FOUND) - info not found in database
     @Test
     void attemptCreateOrderWithProductOrDiscountNotFound() {
         Order order = new Order();
@@ -241,7 +231,7 @@ public class OrderTests {
     }
 
 
-    //    POST: create a new order - fail - info must be not null but it's null
+    //    POST: create a new order - fail(BAD_REQUEST) - info importance is null
     @Test
     void attemptCreateOrderButLineItemNull() {
         Order order = new Order();
@@ -265,7 +255,7 @@ public class OrderTests {
     }
 
 
-    //    POST: create a new order - fail - unauthorized
+    //    POST: create a new order - fail(UNAUTHORIZED) - not login
     @Test
     void attemptCreateOrderButNotLogin() {
         Order order = new Order();
@@ -300,7 +290,7 @@ public class OrderTests {
     }
 
 
-    //    PUT: cancel order - fail - order has delivered successfully
+    //    PUT: cancel order - fail(UNPROCESSABLE_ENTITY) - order has delivered successfully
     @Test
     void attemptCancelOrderHasAlreadySuccess() {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString("/api/orders/cancel")
@@ -314,7 +304,7 @@ public class OrderTests {
         log.info(response.getBody());
     }
 
-    //    PUT: cancel order - fail - order has delivered successfully
+    //    PUT: cancel order - fail(NOT_FOUND) - id not found in database
     @Test
     void attemptCancelOrderNotExist() {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString("/api/orders/cancel")
@@ -329,7 +319,7 @@ public class OrderTests {
     }
 
 
-    //    PUT: cancel order - fail - unauthorized
+    //    PUT: cancel order - fail(UNAUTHORIZED) - not login
     @Test
     void attemptCancelOrderButNotLogin() {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString("/api/orders/cancel")

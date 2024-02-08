@@ -32,7 +32,7 @@ public class SizeTests {
     @Autowired
     SizeRepository sizeRepository;
 
-    /*GET: Get Size by id success*/
+    /*GET: find by id - success(OK)*/
     @Test
     void shouldReturnASizeWhenIFindById() {
         ResponseEntity<String> response =
@@ -49,7 +49,7 @@ public class SizeTests {
     }
 
 
-    /*GET: Size with that id not found in database*/
+    /*GET: find by id - fail(NOT_FOUND) - id not found in database*/
     @Test
     void attemptFindSizeByIdNotFound() {
         ResponseEntity<String> response =
@@ -60,7 +60,7 @@ public class SizeTests {
     }
 
 
-    /*GET:Get Size by Id,  Size Unauthorized*/
+    /*GET: find by id - fail(UNAUTHORIZED) - not login */
     @Test
     void attemptFindSizeByIdButNotLogin() {
         ResponseEntity<String> response =
@@ -70,7 +70,7 @@ public class SizeTests {
     }
 
 
-    /*GET: Get all Sizes success*/
+    /*GET: find all - success(OK)*/
     @Test
     void shouldReturnListWhenFindAll() {
         ResponseEntity<String> response = restTemplate
@@ -82,7 +82,7 @@ public class SizeTests {
     }
 
 
-    /*GET: Get all Sizes, Size Unauthorized*/
+    /*GET: find all - fail(UNAUTHORIZED)*/
     @Test
     void attemptFindAllSizeButNotLogin() {
         ResponseEntity<String> response = restTemplate
@@ -91,7 +91,7 @@ public class SizeTests {
     }
 
 
-    /*POST Size: Create Size success */
+    /*POST: create a new Size - success(CREATED) */
     @Test
     @DirtiesContext
     void attemptCreateAnSizeSuccess() {
@@ -127,7 +127,7 @@ public class SizeTests {
     }
 
 
-    /*POST Size: Forbiden because cridential info is bad*/
+    /*POST: create a new Size - fail(FORBIDDEN) - credential info is bad*/
     @Test
     @DirtiesContext
     void attemptCreateAnSizeFailDueBadCridential() {
@@ -149,7 +149,7 @@ public class SizeTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
-    /*POST Size: Not_found entity due category or brand is not found*/
+    /*POST: create a new Size - fail(NOT_FOUND) - info not found in database*/
     @Test
     @DirtiesContext
     void attemptCreateAnSizeFailDueBrandOrCategoryNotFound() {
@@ -171,7 +171,7 @@ public class SizeTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
-    /*POST Size: Bad request because info is null */
+    /*POST: create a new Size - fail(BAD_REQUEST) - info importance is null*/
     @Test
     @DirtiesContext
     void attemptCreateAnSizeFailDueNullFieldRequired() {
@@ -194,7 +194,7 @@ public class SizeTests {
     }
 
 
-    /*POST Size: Unauthorized */
+    /*POST: create a new Size - fail(UNAUTHORIZED) - not login*/
     @Test
     @DirtiesContext
     void attemptCreateAnSizeButNotLogin() {
@@ -216,8 +216,7 @@ public class SizeTests {
     }
 
 
-
-    /*Patch Size: Update Size success*/
+    /*PUT: update Size - success(OK)*/
     @Test
     void shouldReturnOKWhenDataIsPatched() {
         Map<String, Object> map = new HashMap<>();
@@ -242,7 +241,7 @@ public class SizeTests {
         assertThat(categoryId).isNotNull();
     }
 
-    /*Patch Size: Update Size failed due category or brand not found*/
+    /*PUT: update Size - fail(NOT_FOUND) - info not found in database*/
     @Test
     void attemptPatchSizeWithBrandOrCategoryNotFound() {
         Map<String, Object> map = new HashMap<>();
@@ -264,7 +263,7 @@ public class SizeTests {
     }
 
 
-    /*PATCH Size: Size with that id not found in database*/
+    /*PUT: update Size - fail(NOT_FOUND) - id not found in database*/
     @Test
     void attemptPatchSizeButIdNotFound() {
         Map<String, Object> map = new HashMap<>();
@@ -285,7 +284,7 @@ public class SizeTests {
     }
 
 
-    /*PATCH Size: Bad Cridential*/
+    /*PUT: update Size - fail(FORBIDDEN) - credential info is bad*/
     @Test
     void attemptPatchSizeWithBadCridential() {
         Map<String, Object> map = new HashMap<>();
@@ -306,7 +305,7 @@ public class SizeTests {
     }
 
 
-    /*PATCH Size: Unauthorized*/
+    /*PUT: update Size - fail(UNAUTHORIZED) - not login*/
     @Test
     void attemptPatchSizeButNotLogin() {
         Map<String, Object> map = new HashMap<>();

@@ -26,7 +26,7 @@ public class DiscountTests {
     @Autowired
     TestRestTemplate restTemplate;
 
-    /*GET: find by id - success*/
+    /*GET: find by id - success(OK)*/
     @Test
     void attempFindDiscountByIdSuccess() {
         ResponseEntity<String> response = restTemplate
@@ -36,7 +36,7 @@ public class DiscountTests {
     }
 
 
-    /*GET: find all - fail - id not found*/
+    /*GET: find all - fail(NOT_FOUND) - id not found in database*/
     @Test
     void attempFindDiscountNotFound() {
         ResponseEntity<String> response = restTemplate
@@ -46,7 +46,7 @@ public class DiscountTests {
     }
 
 
-    /*GET: find by id - fail - unauthorized*/
+    /*GET: find by id - fail(UNAUTHORIZED) - not login*/
     @Test
     void attempFindDiscountButNotLogin() {
         ResponseEntity<String> response = restTemplate
@@ -55,7 +55,7 @@ public class DiscountTests {
     }
 
 
-    /*GET: find all - success*/
+    /*GET: find all - success(OK)*/
     @Test
     void attemptGetAllDiscountsSuccess() {
         ResponseEntity<String> response = restTemplate
@@ -68,7 +68,7 @@ public class DiscountTests {
     }
 
 
-    /*GET: find all - fail - unauthorized*/
+    /*GET: find all - fail(UNAUTHORIZED) - not login*/
     @Test
     void attemptGetAllDiscountsButNotLogin() {
         ResponseEntity<String> response = restTemplate
@@ -78,7 +78,7 @@ public class DiscountTests {
     }
 
 
-    /*POST: create a new discount - success */
+    /*POST: create a new discount - success(CREATED)*/
     @Test
     @DirtiesContext
     void attemptCreateAnDiscountSuccess() {
@@ -109,7 +109,7 @@ public class DiscountTests {
     }
 
 
-    /*POST: create a new discount - fail - forbidden*/
+    /*POST: create a new discount - fail(FORBIDDEN) - credential info is bad*/
     @Test
     @DirtiesContext
     void attemptCreateAnDiscountWithBadCridential() {
@@ -127,7 +127,7 @@ public class DiscountTests {
     }
 
 
-    /*POST: create a new discount - fail - info required is null */
+    /*POST: create a new discount - fail(BAD_REQUEST) - info required is null */
     @Test
     @DirtiesContext
     void attemptCreateAnDiscountButInfoIsNull() {
@@ -144,7 +144,7 @@ public class DiscountTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
-    /*POST: create a new discount - fail - percent > 100*/
+    /*POST: create a new discount - fail(BAD_REQUEST) - cause percent > 100%*/
     @Test
     @DirtiesContext
     void attemptCreateAnDiscountWhilePercentGreateThan100() {
@@ -165,7 +165,7 @@ public class DiscountTests {
 
 
 
-    /*POST: create a new discount - fail - unauthorized*/
+    /*POST: create a new discount - fail(UNAUTHORIZED) - not login*/
     @Test
     @DirtiesContext
     void attemptCreateAnDiscountButNotLogin() {
@@ -182,7 +182,7 @@ public class DiscountTests {
     }
 
 
-    /*PUT: update a discount - success*/
+    /*PUT: update a discount - success(OK)*/
     @Test
     @DirtiesContext
     void attemptPutDiscountSuccess() {
@@ -212,7 +212,7 @@ public class DiscountTests {
     }
 
 
-    /*PUT: update a discount - fail - percent > 100*/
+    /*PUT: update a discount - fail(BAD_REQUEST) - cause percent > 100%*/
     @Test
     void attemptPutDiscountWhilePercentBetterThan100() {
         Map<String, Object> map = new HashMap<>();
@@ -229,7 +229,7 @@ public class DiscountTests {
 
     }
 
-    /*PUT: update a discount - fail - percent < 1*/
+    /*PUT: update a discount - fail(BAD_REQUEST) - cause percent < 1%*/
     @Test
     void attemptPutDiscountWhilePercentLessThan1() {
         Map<String, Object> map = new HashMap<>();
@@ -246,7 +246,7 @@ public class DiscountTests {
 
     }
 
-    /*PUT: update a discount - fail - amount < 1*/
+    /*PUT: update a discount - fail(BAD_REQUEST) - cause amount < 1*/
     @Test
     void attemptPutDiscountWhileAmountLessThan1() {
         Map<String, Object> map = new HashMap<>();
@@ -263,7 +263,7 @@ public class DiscountTests {
     }
 
 
-    /*PUT: update a discount - fail - ain't existence*/
+    /*PUT: update a discount - fail(NOT_FOUND) - id not found in database*/
     @Test
     void attemptPutDiscountNotFound() {
         Map<String, Object> map = new HashMap<>();
@@ -281,7 +281,7 @@ public class DiscountTests {
     }
 
 
-    /*PUT: update a discount - fail - forbidden*/
+    /*PUT: update a discount - fail(FORBIDDEN) - credential info is bad*/
     @Test
     void attemptPutDiscountWithBadCridential() {
         Map<String, Object> map = new HashMap<>();
@@ -299,7 +299,7 @@ public class DiscountTests {
     }
 
 
-    /*PUT: update a discount - fail - unauthorized*/
+    /*PUT: update a discount - fail(UNAUTHORIZED) - not login*/
     @Test
     void attemptPutDiscountButNotLogin() {
         Map<String, Object> map = new HashMap<>();
@@ -312,30 +312,6 @@ public class DiscountTests {
         ResponseEntity<String> response = restTemplate
                 .exchange("/api/discounts/402", HttpMethod.PUT, request, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-    }
-
-
-    @Test
-    void attemptUpdateDiscountSuccess() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("code", "HAHAHA");
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(map);
-        ResponseEntity<String> response = restTemplate
-                .withBasicAuth("employee", "password")
-                .exchange("/api/discounts/402", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        ResponseEntity<String> getResponse = restTemplate
-                .withBasicAuth("customer", "password")
-                .getForEntity("/api/discounts/402", String.class);
-        DocumentContext doc = JsonPath.parse(getResponse.getBody());
-        String code = doc.read("$.data.code");
-        String type = doc.read("$.data.type");
-        Number value = doc.read("$.data.value");
-
-        assertThat(code).isEqualTo("HAHAHA");
-        assertThat(type).isNotNull();
-        assertThat(value).isNotNull();
     }
 
 }

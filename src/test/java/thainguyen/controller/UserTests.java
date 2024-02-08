@@ -31,7 +31,7 @@ public class UserTests {
     @Autowired
     PasswordEncoder encoder;
 
-//GET: Get User by id success
+//GET: find by id - success(OK)
 
     @Test
     void shouldReturn200WhenIFindAUserExist() {
@@ -54,7 +54,7 @@ public class UserTests {
         assertThat(age).isEqualTo(19);
     }
 
-//GET: User with that id not found in database
+//GET: find by id - fail(NOT_FOUND) - id not found in database
 
     @Test
     void shouldReturn404WhenIFindAUserNotExist() {
@@ -65,7 +65,7 @@ public class UserTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
-//GET:Get User by Id,  User Unauthorized
+//GET: find by id - fail(UNAUTHORIZED) - not login
 
     @Test
     void shouldReturn401WhenFindUserButNotLogin() {
@@ -74,7 +74,7 @@ public class UserTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
-//GET: Get all Users success
+//GET: find all - success(OK)
 
     @Test
     void shouldReturnListWhenFindAll() {
@@ -88,7 +88,7 @@ public class UserTests {
         assertThat(length).isEqualTo(3);
     }
 
-//GET: Get all users, User Unauthorized
+//GET: find all - fail(UNAUTHORIZED) - because not login
 
     @Test
     void attemptGetAllUsersButNotLogin() {
@@ -98,7 +98,7 @@ public class UserTests {
     }
 
 
-//POST User: Create User success
+//POST: create a new User - success(CREATED)
 
     @Test
     @DirtiesContext
@@ -133,7 +133,7 @@ public class UserTests {
 
     }
 
-//POST User: Forbiden because cridential info is bad
+//POST: create a new User - fail(FORBIDDEN) - because credential info is bad
 
     @Test
     @DirtiesContext
@@ -154,7 +154,7 @@ public class UserTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
-//POST User: Bad request because info is null
+//POST: create a new User - fail(BAD_REQUEST) - because info is null
 
     @Test
     @DirtiesContext
@@ -172,7 +172,7 @@ public class UserTests {
                 .postForEntity("/api/users", user, Void.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
-//POST User: Unauthorized
+//POST: create a new User - fail(UNAUTHORIZED) - not login
 
     @Test
     @DirtiesContext
@@ -191,7 +191,7 @@ public class UserTests {
     }
 
 
-//PUT User: Update User success
+//PUT: update User - success(OK)
 
     @Test
     @DirtiesContext
@@ -225,7 +225,7 @@ public class UserTests {
         assertThat(avatar).isNotNull();
     }
 
-//PUT: User with that id not found in database
+//PUT: update User - fail(NOT_FOUND) - id not found in database
 
     @Test
     @DirtiesContext
@@ -246,7 +246,7 @@ public class UserTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
-//PUT User: Bad Cridential
+//PUT: update User - fail(FORBIDDEN) - credential info is bad
 
     @Test
     @DirtiesContext
@@ -267,7 +267,7 @@ public class UserTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
-//PUT User: Unauthorized
+//PUT: update User - fail(UNAUTHORIZED) - not login
 
     @Test
     @DirtiesContext
@@ -287,91 +287,5 @@ public class UserTests {
                         .exchange("/api/users/3", HttpMethod.PUT, request, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
-
-
-//PUT User: Update User success
-
-    @Test
-    @DirtiesContext
-    void shouldReturnDataUpdatedWhenUpdateUser() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("fullname", "Fullname changed");
-        map.put("avatar", "avatar change demo");
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(map);
-
-        ResponseEntity<String> response =
-                restTemplate.withBasicAuth("employee", "password")
-                        .exchange("/api/users/53", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        ResponseEntity<String> getResponse = restTemplate
-                .withBasicAuth("admin", "password")
-                .getForEntity("/api/users/53", String.class);
-        DocumentContext doc = JsonPath.parse(getResponse.getBody());
-
-        String fullname = doc.read("$.data.fullname");
-        String position = doc.read("$.data.position");
-        assertThat(fullname).isEqualTo("Fullname changed");
-        assertThat(position).isEqualTo("CUSTOMER");
-
-        String username = doc.read("$.data.username");
-        Number age = doc.read("$.data.age");
-        String avatar = doc.read("$.data.avatar");
-        assertThat(username).isEqualTo("customer");
-        assertThat(age).isEqualTo(19);
-        assertThat(avatar).isEqualTo("avatar change demo");
-    }
-
-//PUT User: User with that id not found in database
-
-    @Test
-    @DirtiesContext
-    void shouldReturn404WhenUpdateAnUserNotExist() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("fullname", "Fullname changed");
-        map.put("avatar", "avatar change demo");
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(map);
-
-        ResponseEntity<String> response =
-                restTemplate.withBasicAuth("employee", "password")
-                        .exchange("/api/users/5555", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-
-    }
-
-
-//PUT User: Bad Cridential
-
-    @Test
-    @DirtiesContext
-    void shouldReturn403WhenUpdateUserButBadCridential() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("fullname", "Fullname changed");
-        map.put("avatar", "avatar change demo");
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(map);
-
-        ResponseEntity<String> response =
-                restTemplate.withBasicAuth("customer", "password")
-                        .exchange("/api/users/53", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-
-    }
-
-//PUT User: Unauthorized
-
-    @Test
-    @DirtiesContext
-    void attemptUpdateUserByUpdateButNotLogin() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("fullname", "Fullname changed");
-        map.put("avatar", "avatar change demo");
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(map);
-        ResponseEntity<String> response =
-                restTemplate.withBasicAuth("customer", "password")
-                        .exchange("/api/users/53", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-
-    }
-
 
 }

@@ -35,7 +35,7 @@ public class ProductTests {
     ObjectMapper objectMapper;
 
 
-//GET Product: Get Product by id success
+//GET: find by id - success(OK)
 
     @Test
     void shouldReturn200WhenIFindAProductExist() {
@@ -47,7 +47,7 @@ public class ProductTests {
     }
 
 
-//GET Product: Product with that id not found in database
+//GET: find by id - fail(NOT_FOUND) - id not found in database
 
     @Test
     void shouldReturn404WhenIFindAProductNotExist() {
@@ -58,7 +58,7 @@ public class ProductTests {
     }
 
 
-//GET Product:Get Product by Id,  Product Unauthorized
+//GET: find by id - fail(UNAUTHORIZED) - not login
 
     @Test
     void attemptGetProductByIdButNotLogin() {
@@ -68,7 +68,7 @@ public class ProductTests {
     }
 
 
-//GET Product: Get all Products success
+//GET: find all - success(OK)
 
     @Test
     void shouldReturnListProductWhenFindAll() {
@@ -82,7 +82,7 @@ public class ProductTests {
     }
 
 
-//GET Product: Get all Products, Product Unauthorized
+//GET: find all - fail(UNAUTHORIZED)
 
     @Test
     void attemptGetAllProductButNotLogin() {
@@ -92,7 +92,7 @@ public class ProductTests {
     }
 
 
-//POST Product: Create Product success
+//POST: create a new Product - success(CREATED)
 
     @Test
     void shouldReturn201WhenCreatedAProductSuccess() {
@@ -126,7 +126,7 @@ public class ProductTests {
     }
 
 
-//POST Product: Create Product unsuccess because idBrand or idCategory not found
+//POST: create a new Product - fail(NOT_FOUND) - info not found in database
 
     @Test
     @DirtiesContext
@@ -145,7 +145,7 @@ public class ProductTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
-//POST Product: Create Product unsuccess because idBrand or idCategory is null
+//POST: create a new Product - fail(BAD_REQUEST) - info importance is null
 
     @Test
     @DirtiesContext
@@ -164,7 +164,7 @@ public class ProductTests {
     }
 
 
-//POST Product: Forbiden because cridential info is bad
+//POST: create a new Product - fail(FORBIDDEN) - credential info is bad
 
     @Test
     @DirtiesContext
@@ -187,32 +187,7 @@ public class ProductTests {
     }
 
 
-//POST Product: Bad request because info must be non null but it's null
-
-    @Test
-    @DirtiesContext
-    void attemptPostProductButFieldNotNullIsNull() {
-        Product product = new Product();
-//        product.setName("Demo product");
-        product.setPicture("Demo link product");
-        product.setDescription("Demo description product");
-        Brand brand = new Brand();
-        brand.setId(102L);
-        Category category = new Category();
-        category.setId(154L);
-        product.setBrand(brand);
-        product.setCategory(category);
-
-        ResponseEntity<Void> response = restTemplate
-                .withBasicAuth("employee", "password")
-                .postForEntity("/api/products", product, Void.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    }
-
-
-
-
-//POST Product: Unauthorized
+//POST: create a new Size - fail(UNAUTHORIZED) - not login
 
     @Test
     @DirtiesContext
@@ -233,8 +208,7 @@ public class ProductTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
-
-//PUT Product: Update Product success
+//PUT: update Product - success(OK)
 
     @Test
     @DirtiesContext
@@ -266,7 +240,7 @@ public class ProductTests {
     }
 
 
-    // PUT Product: Bad request due when put product missing field required
+    // PUT: update Product - fail(BAD_REQUEST) - info importance is null
     @Test
     @DirtiesContext
     void attemptPutProductButFieldsRequiredNotNull() {
@@ -281,7 +255,7 @@ public class ProductTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
-    // PUT Product: Notfound due when put product that brand or category not found
+    // PUT: update Product - fail(NOT_FOUND) - info not found in database
     @Test
     @DirtiesContext
     void attemptPutProductBut() throws JsonProcessingException {
@@ -299,7 +273,7 @@ public class ProductTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
-//PUT Product: Product with that id not found in database
+//PUT: update Product - fail(NOT_FOUND) - id not found in database
 
     @Test
     @DirtiesContext
@@ -322,7 +296,7 @@ public class ProductTests {
     }
 
 
-//PUT Product: Bad Cridential
+//PUT: update Product - fail(FORBIDDEN) - credential info is bad
 
     @Test
     @DirtiesContext
@@ -339,7 +313,7 @@ public class ProductTests {
     }
 
 
-//PUT Product: Unauthorized
+//PUT: update Product - fail(UNAUTHORIZED) - not login
 
     @Test
     @DirtiesContext
