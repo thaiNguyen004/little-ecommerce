@@ -6,8 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import thainguyen.domain.converter.PriceConverter;
-import thainguyen.domain.valuetypes.Price;
 
 import static thainguyen.domain.Constants.SEQUENCE_GENERATOR;
 
@@ -26,20 +24,19 @@ public class LineItem {
     private Order order;
 
     @ManyToOne(targetEntity = DetailProduct.class)
-    @NotNull
+    @NotNull(message = "detailProduct attribute must not be null")
     private DetailProduct detailProduct;
 
-    @Convert(converter = PriceConverter.class)
-    private Price amount;
-    private @NotNull Integer quantity;
+    private Integer amount;
+    @NotNull(message = "quantity attribute must not be null")
+    private Integer quantity;
 
-    @Convert(converter = PriceConverter.class)
-    private Price totalPrice;
+    private Integer totalPrice;
 
     private Double totalWeight;
 
     /*Custom constructor*/
-    public LineItem(DetailProduct detailProduct, Integer quantity, Price amount) {
+    public LineItem(DetailProduct detailProduct, Integer quantity, Integer amount) {
         this.detailProduct = detailProduct;
         this.amount = amount;
         this.quantity = quantity;

@@ -2,8 +2,9 @@ package thainguyen.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -36,14 +37,29 @@ public class User implements UserDetails {
     @JsonIgnore
     private Long version;
 
-    private @NotNull String username;
-    private @NotNull String password;
-    private @NotNull String email;
-    private @NotNull String fullname;
-    private @NotNull String gender;
-    private @NotNull Integer age;
+    @NotBlank(message = "Username attribute must not be null and empty!")
+    @Column(unique = true)
+    private String username;
+    @NotBlank(message = "Password attribute must not be null and empty!")
+    private String password;
+    @NotBlank(message = "Email attribute must not be null and empty!")
+    @Column(unique = true)
+    private String email;
+    @NotBlank(message = "Fullname attribute must not be null and empty!")
+    private String fullname;
+    @NotBlank(message = "Gender attribute must not be null and empty!")
+    private String gender;
+
+    @NotNull(message = "Username attribute must not be null!")
+    @Min(value = 18, message = "Minimum age is 18")
+    private Integer age;
+
+    @NotBlank(message = "Avatar attribute must not be null and empty!")
     private String avatar;
-    private @NotNull String position;
+
+    @NotNull(message = "Position attribute must not be null!")
+    @Enumerated(EnumType.STRING)
+    private Position position;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JsonIgnore
@@ -51,6 +67,10 @@ public class User implements UserDetails {
 
     @CreationTimestamp
     private LocalDateTime registerdAt;
+
+    public static enum Position {
+        ADMIN, EMPLOYEE, CUSTOMER
+    }
 
     @Override
     @JsonIgnore
@@ -64,7 +84,7 @@ public class User implements UserDetails {
             , String gender
             , Integer age
             , String avatar
-            , String position) {
+            , Position position) {
         this.username = username;
         this.password = password;
         this.email = email;

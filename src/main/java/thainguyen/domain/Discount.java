@@ -2,6 +2,8 @@ package thainguyen.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,16 +32,25 @@ public class Discount {
     @JsonIgnore
     private Set<Order> order = new HashSet<>();
 
-    private @NotNull String code;
+    @NotNull
+    @NotBlank(message = "Code attribute must not be null or empty!")
+    @Column(unique = true)
+    private String code;
 
     @Enumerated(EnumType.STRING)
-    private @NotNull Type type;
+    @NotNull
+    private Type type;
 
     @Enumerated(EnumType.STRING)
-    private @NotNull Kind kind;
+    @NotNull
+    private Kind kind;
 
-    private @NotNull Integer value;
-    private @NotNull Integer quantity;
+    @Min(value = 1, message = "Discount's value require greater than 1")
+    @NotNull(message = "Value attribute must not be null")
+    private Integer value;
+
+    @NotNull(message = "Quantity attribute must not be null")
+    private Integer quantity;
 
     private LocalDateTime start;
     private LocalDateTime end;

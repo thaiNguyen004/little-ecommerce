@@ -14,13 +14,11 @@ import org.springframework.web.client.RestTemplate;
 import thainguyen.controller.exception.GhtkCreateOrderFailedException;
 import thainguyen.data.ShipmentRepository;
 import thainguyen.domain.*;
-import thainguyen.domain.valuetypes.Price;
 import thainguyen.dto.ghtk.GhtkForm;
 import thainguyen.dto.ghtk.OrderGHTKDto;
 import thainguyen.service.generic.GenericServiceImpl;
 import thainguyen.service.user.UserService;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 @Service
@@ -49,12 +47,8 @@ public class ShipmentServiceImpl extends GenericServiceImpl<Shipment>
         Shipment shipment = new Shipment(order);
 
         /*Create Shipment*/
-        Price fee = new Price(BigDecimal.valueOf(responseFromGhtk.getOrder().getFee())
-                , Currency.getInstance("VND"));
-        Price insuranceFee = new Price(BigDecimal.valueOf(responseFromGhtk.getOrder().getInsurance_fee())
-                , Currency.getInstance("VND"));
-        shipment.setFee(fee);
-        shipment.setInsuranceFee(insuranceFee);
+        shipment.setFee(responseFromGhtk.getOrder().getFee());
+        shipment.setInsuranceFee(responseFromGhtk.getOrder().getInsurance_fee());
         shipment.setEstimatedPickTime(responseFromGhtk.getOrder().getEstimated_pick_time());
         shipment.setEstimatedDeliverTime(responseFromGhtk.getOrder().getEstimated_deliver_time());
         shipment.setLabelCode(responseFromGhtk.getOrder().getLabel());
@@ -71,9 +65,13 @@ public class ShipmentServiceImpl extends GenericServiceImpl<Shipment>
         ghtkForm.setProducts(products);
         ghtkForm.setOrder(ghtkOrderForm);
 
+        // LOG
         ObjectWriter ow = new ObjectMapper()
                 .writerWithDefaultPrettyPrinter();
         String json = ow.writeValueAsString(ghtkForm);
+        System.out.println(json);
+        // LOG
+
         HttpHeaders headers = new HttpHeaders();
         headers.add("Token", Constants.TOKEN);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
@@ -105,11 +103,7 @@ public class ShipmentServiceImpl extends GenericServiceImpl<Shipment>
 
     public GhtkForm.GhtkOrderForm transferOrderToGhtkOrderForm(Order order) {
         User customer = order.getUser();
-        Optional<User> adminOpt = userService.findByUsername("admin");
-        if (adminOpt.isEmpty()) {
-            return null;
-        }
-        User admin = adminOpt.get();
+        User admin = userService.findByUsername("admin");
 
         Address addressOfCustomer = order.getAddress();
         Address addressOfAdmin = admin.getAddresses().get(0);
@@ -135,8 +129,8 @@ public class ShipmentServiceImpl extends GenericServiceImpl<Shipment>
         ghtkOrderForm.setPick_tel(addressOfAdmin.getPhoneNumber());
 
         ghtkOrderForm.setIs_freeship(1);
-        ghtkOrderForm.setPick_money(order.getTotalPriceBeforeDiscount().getValue().intValue());
-        ghtkOrderForm.setValue(order.getTotalPriceBeforeDiscount().getValue().intValue());
+        ghtkOrderForm.setPick_money(order.getTotalPriceBeforeDiscount());
+        ghtkOrderForm.setValue(order.getTotalPriceBeforeDiscount());
         ghtkOrderForm.setEmail(customer.getEmail());
 
         return ghtkOrderForm;

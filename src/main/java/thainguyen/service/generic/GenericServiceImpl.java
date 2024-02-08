@@ -37,11 +37,15 @@ public abstract class GenericServiceImpl <T> implements GenericService<T> {
 
     @Override
     public T findById(Long id) throws NoResultException {
-        T result = em.find(entityClass, id);
-        if (result != null) return result;
-        String messageError = "Invalid " + entityClass.getName().toLowerCase()
-                + " ID, " + entityClass.getName().toLowerCase() + " not found";
-        throw new NoResultException(messageError);
+        try {
+            T result = em.find(entityClass, id);
+            if (result != null) return result;
+            String messageError = "Invalid " + entityClass.getName().toLowerCase()
+                    + " ID, " + entityClass.getName().toLowerCase() + " not found";
+            throw new NoResultException(messageError);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException(entityClass + " id " + " required not null");
+        }
     }
 
     @Override

@@ -2,9 +2,12 @@ package thainguyen.service.discount;
 
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
+import thainguyen.controller.exception.DiscountInvalidException;
 import thainguyen.data.DiscountRepository;
 import thainguyen.domain.Discount;
 import thainguyen.service.generic.GenericServiceImpl;
+
+import java.sql.SQLIntegrityConstraintViolationException;
 
 @Service
 public class DiscountServiceImpl extends GenericServiceImpl<Discount>
@@ -18,44 +21,45 @@ public class DiscountServiceImpl extends GenericServiceImpl<Discount>
     }
 
     @Override
-    public Discount create(Discount discount)  {
+    public Discount create(Discount discount) throws SQLIntegrityConstraintViolationException {
+        boolean isCodeExist = discountRepo.existsDiscountByCode(discount.getCode());
+        if (isCodeExist) throw new SQLIntegrityConstraintViolationException("Discount with code = "+ discount.getCode() +" already exist");
         return discountRepo.save(discount);
     }
 
     @Override
-    public Discount updateByPut(Long id, Discount discount) {
-        return discountRepo.findById(id).map(persistDiscount -> {
-            discount.setId(id);
-            discount.setVersion(persistDiscount.getVersion());
-            return discountRepo.save(discount);
-        }).orElseGet(() -> null);
+    public Discount updateDiscount(Long id, Discount discount) throws DiscountInvalidException {
+        Discount discountPersist = findById(id);
+        if (discount.getCode() != null) {
+            discountPersist.setCode(discount.getCode());
+        }
+        if (discount.getType() != null) {
+            discountPersist.setType(discount.getType());
+        }
+        if (discount.getKind() != null) {
+            discountPersist.setKind(discount.getKind());
+        }
+        if (discount.getQuantity() != null) {
+            discountPersist.setQuantity(discount.getQuantity());
+        }
+        if (discount.getValue() != null) {
+            discountPersist.setValue(discount.getValue());
+            checkDiscount(discountPersist);
+        }
+        if (discount.getStart() != null) {
+            discountPersist.setStart(discount.getStart());
+        }
+        if (discount.getEnd() != null) {
+            discountPersist.setEnd(discount.getEnd());
+        }
+        return discountRepo.save(discountPersist);
     }
 
-    @Override
-    public Discount updateByPatch(Long id, Discount discount) {
-        return discountRepo.findById(id).map(persistDiscount -> {
-            if (discount.getCode() != null) {
-                persistDiscount.setCode(discount.getCode());
-            }
-            if (discount.getType() != null) {
-                persistDiscount.setType(discount.getType());
-            }
-            if (discount.getKind() != null) {
-                persistDiscount.setKind(discount.getKind());
-            }
-            if (discount.getQuantity() != null) {
-                persistDiscount.setQuantity(discount.getQuantity());
-            }
-            if (discount.getValue() != null) {
-                persistDiscount.setValue(discount.getValue());
-            }
-            if (discount.getStart() != null) {
-                persistDiscount.setStart(discount.getStart());
-            }
-            if (discount.getEnd() != null) {
-                persistDiscount.setEnd(discount.getEnd());
-            }
-            return discountRepo.save(persistDiscount);
-        }).orElseGet(() -> null);
+    public void checkDiscount(Discount discount) throws DiscountInvalidException {
+        if (discount.getType().equals(Discount.Type.PERCENTAGE)) {
+            if (discount.getValue() > 100) throw new DiscountInvalidException("Discount value must not greater than 100%");
+            if (discount.getValue() < 1) throw new DiscountInvalidException("Discount value must not less than 1%");
+        }
+        if (discount.getValue() < 1) throw new DiscountInvalidException("Discount value must not less than 1");
     }
 }

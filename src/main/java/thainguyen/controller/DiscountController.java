@@ -1,98 +1,97 @@
 package thainguyen.controller;
 
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
+import thainguyen.controller.conf.ResponseComponent;
+import thainguyen.controller.exception.DiscountInvalidException;
 import thainguyen.domain.Discount;
 import thainguyen.service.discount.DiscountService;
+import thainguyen.utilities.ObjectMapperUtil;
+import thainguyen.utilities.ValidateUtil;
 
 import java.net.URI;
+import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/api/discounts", produces = "application/json")
+@AllArgsConstructor
 public class DiscountController {
 
     private final DiscountService discountService;
-
-    public DiscountController(DiscountService discountService) {
-        this.discountService = discountService;
-    }
+    private final ValidateUtil validateUtil;
+    private final ObjectMapperUtil objectMapperUtil;
 
     @GetMapping
-    private ResponseEntity<List<Discount>> findAll() {
+    private ResponseEntity<ResponseComponent<List<Discount>>> findAll() {
         List<Discount> discounts = discountService.findAll();
-        if (discounts.isEmpty()) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(discounts);
+        ResponseComponent<List<Discount>> response = ResponseComponent
+                .<List<Discount>>builder()
+                .status(HttpStatus.OK)
+                .success(true)
+                .data(discounts)
+                .build();
+        return new ResponseEntity<>(response, response.getStatus());
     }
 
     @GetMapping("/{id}")
-    private ResponseEntity<Discount> findById(@PathVariable Long id) {
-        Optional<Discount> discountOpt = discountService.findById(id);
-        return discountOpt.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    private ResponseEntity<ResponseComponent<Discount>> findById(@PathVariable Long id) {
+        Discount discount = discountService.findById(id);
+        ResponseComponent<Discount> response = ResponseComponent
+                .<Discount>builder()
+                .status(HttpStatus.OK)
+                .success(true)
+                .data(discount)
+                .build();
+        return new ResponseEntity<>(response, response.getStatus());
     }
 
     @PostMapping(consumes = "application/json")
-    private ResponseEntity<Void> createDiscount(@RequestBody Discount discount, UriComponentsBuilder ucb) {
-        if (discount.getType() == null
-                || discount.getCode() == null
-                || discount.getValue() == null
-                || discount.getQuantity() == null
-                || discount.getStart() == null
-                || discount.getEnd() == null
-                || discount.getKind() == null ) {
-            return ResponseEntity.badRequest().build();
-        }
-        discount = validateDiscount(discount);
-        if (discount == null) return ResponseEntity.unprocessableEntity().build();
+    private ResponseEntity<ResponseComponent<Void>> createDiscount(@RequestBody @Valid Discount discount,
+                                                                   UriComponentsBuilder ucb)
+            throws SQLIntegrityConstraintViolationException, DiscountInvalidException {
+
+        discountService.checkDiscount(discount);
         discount = discountService.create(discount);
         URI locationOfNew = ucb.path("/api/discounts/{id}")
                 .buildAndExpand(discount.getId())
                 .toUri();
-        return ResponseEntity.created(locationOfNew).build();
+        ResponseComponent<Void> response = ResponseComponent
+                .<Void>builder()
+                .success(true)
+                .status(HttpStatus.OK)
+                .message("Create Discount success")
+                .build();
+        return ResponseEntity
+                .created(locationOfNew)
+                .body(response);
     }
 
     @PutMapping(value = "/{id}", consumes = "application/json")
-    private ResponseEntity<Discount> putDiscount(@PathVariable Long id, @RequestBody Discount discount) {
-        if (discount.getType() == null
-                || discount.getCode() == null
-                || discount.getValue() == null
-                || discount.getQuantity() == null
-                || discount.getStart() == null
-                || discount.getEnd() == null
-                || discount.getKind() == null ) {
-            return ResponseEntity.badRequest().build();
-        }
-        discount = validateDiscount(discount);
-        if (discount == null) return ResponseEntity.unprocessableEntity().build();
-        discount = discountService.updateByPut(id, discount);
-        if (discount == null) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(discount);
-    }
+    private ResponseEntity<ResponseComponent<Discount>> patchDiscount (@PathVariable Long id,
+                                                                       @RequestBody Map<String, Object> discountMap)
+            throws Exception {
 
-    @PatchMapping(value = "/{id}", consumes = "application/json")
-    private ResponseEntity<Discount> patchDiscount (@PathVariable Long id, @RequestBody Discount discount) {
-        if (discount.getType() != null && discount.getValue() != null) {
-            discount = validateDiscount(discount);
-            if (discount == null) return ResponseEntity.unprocessableEntity().build();
-        }
-        discount = discountService.updateByPatch(id, discount);
-        if (discount == null) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(discount);
+        validateUtil.validate(discountMap, Discount.class);
+        Discount discount = (Discount) objectMapperUtil.convertMapToEntity(discountMap, Discount.class);
+        discount = discountService.updateDiscount(id, discount);
+        ResponseComponent<Discount> response = ResponseComponent
+                .<Discount>builder()
+                .success(true)
+                .status(HttpStatus.OK)
+                .message("Update discount success")
+                .data(discount)
+                .build();
+        return new ResponseEntity<>(response, response.getStatus());
     }
 
 
-    private Discount validateDiscount(Discount discount){
-        Discount.Type type = discount.getType();
-        int value = discount.getValue();
-        if (type.equals(Discount.Type.PERCENTAGE) && (value > 100 || value < 1)) {
-            return null;
-        }
-        if (type.equals(Discount.Type.AMOUNT) && (value < 1)) {
-            return null;
-        }
-        return discount;
-    }
 
 }

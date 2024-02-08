@@ -1,68 +1,90 @@
 package thainguyen.controller;
 
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
+import thainguyen.controller.conf.ResponseComponent;
 import thainguyen.domain.User;
 import thainguyen.service.user.UserService;
+import thainguyen.utilities.ObjectMapperUtil;
+import thainguyen.utilities.ValidateUtil;
 
 import java.net.URI;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/api/users", produces = "application/json")
 @Slf4j
+@AllArgsConstructor
 public class UserController {
 
-    private UserService service;
-    private final ModelMapper modelMapper;
-
-    public UserController(UserService service, ModelMapper modelMapper) {
-        this.service = service;
-        this.modelMapper = modelMapper;
-    }
+    private final UserService service;
+    private final ValidateUtil validateUtil;
+    private final ObjectMapperUtil objectMapperUtil;
 
     @GetMapping
-    private ResponseEntity<List<User>> findAll() {
+    private ResponseEntity<ResponseComponent<List<User>>> findAll() {
         List<User> users = service.findAll();
-        if (users.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(users);
+        ResponseComponent<List<User>> response = ResponseComponent
+                .<List<User>>builder()
+                .success(true)
+                .status(HttpStatus.OK)
+                .data(users)
+                .build();
+        return new ResponseEntity<>(response, response.getStatus());
     }
 
     @GetMapping(value = "/{id}")
-    private ResponseEntity<User> findById(@PathVariable  Long id) {
-        return service.findById(id).map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    private ResponseEntity<ResponseComponent<User>> findById(@PathVariable  Long id) {
+        User user = service.findById(id);
+        ResponseComponent<User> response = ResponseComponent
+                .<User>builder()
+                .success(true)
+                .status(HttpStatus.OK)
+                .data(user)
+                .build();
+        return new ResponseEntity<>(response, response.getStatus());
     }
 
     @PostMapping(consumes = "application/json")
-    private ResponseEntity<Void> createUser(@RequestBody User user,
-                                               UriComponentsBuilder ucb) {
+    private ResponseEntity<ResponseComponent<Void>> createUser(@RequestBody @Valid User user,
+                                               UriComponentsBuilder ucb)
+            throws SQLIntegrityConstraintViolationException {
+
         user = service.create(user);
-        URI location = ucb.path("/api/users/{id}").buildAndExpand(user.getId()).toUri();
-        return ResponseEntity.created(location).build();
+        URI locationOfNewUser = ucb.path("/api/users/{id}").buildAndExpand(user.getId()).toUri();
+        ResponseComponent<Void> response = ResponseComponent
+                .<Void>builder()
+                .success(true)
+                .status(HttpStatus.OK)
+                .message("Create User success")
+                .build();
+        return ResponseEntity.created(locationOfNewUser).body(response);
     }
 
     @PutMapping(value = "/{id}", consumes = "application/json")
-    private ResponseEntity<User> putProduct(@PathVariable Long id, @RequestBody User user) {
-        User updatedUser = service.updateByPut(id, user);
-        if (updatedUser != null) {
-            return ResponseEntity.ok(updatedUser);
-        }
-        return ResponseEntity.notFound().build();
-    }
+    private ResponseEntity<ResponseComponent<User>> patchProduct(@PathVariable Long id,
+                                                                 @RequestBody Map<String, Object> userMap)
+            throws MethodArgumentNotValidException {
 
-    @PatchMapping(value = "/{id}", consumes = "application/json")
-    private ResponseEntity<User> patchProduct(@PathVariable Long id, @RequestBody User user) {
-        User updatedUser = service.updateByPatch(id, user);
-        if (updatedUser != null) {
-            return ResponseEntity.ok(updatedUser);
-        }
-        return ResponseEntity.notFound().build();
+        validateUtil.validate(userMap, User.class);
+        User user = (User) objectMapperUtil.convertMapToEntity(userMap, User.class);
+        User updatedUser = service.updateUser(id, user);
+        ResponseComponent<User> response = ResponseComponent
+                .<User>builder()
+                .success(true)
+                .status(HttpStatus.OK)
+                .message("Update User success")
+                .data(user)
+                .build();
+        return new ResponseEntity<>(response, response.getStatus());
     }
 
 }

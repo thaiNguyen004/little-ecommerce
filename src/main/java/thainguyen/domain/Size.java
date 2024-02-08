@@ -1,6 +1,7 @@
 package thainguyen.domain;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,22 +22,34 @@ public class Size {
     private Long version;
 
     @ManyToOne
+    @NotNull(message = "brand of size must not be null")
     private Brand brand;
 
     @ManyToOne
+    @NotNull(message = "category of size must not be null")
     private Category category;
 
     @Enumerated(EnumType.STRING)
-    private @NotNull Type name;
+    @NotNull(message = "Name attribute must not be null!")
+    private Size.Name name;
+
+    @NotNull(message = "Chest attribute must not be null")
+    @Min(value = 1, message = "Chest width cannot be negative")
     private Integer chest;
+
+    @NotNull(message = "Length attribute must not be null")
+    @Min(value = 1, message = "Length width cannot be negative")
     private Integer length;
+
+    @NotNull(message = "Width attribute must not be null")
+    @Min(value = 1, message = "Width width cannot be negative")
     private Integer width;
 
-    public static enum Type {
-        S, M, L, XL, XXL, XXXL
+    public static enum Name {
+        S, M, L, XL, XXL, XXXL;
     }
 
-    public Size(Type name, Integer chest, Integer length, Integer width) {
+    public Size(Name name, Integer chest, Integer length, Integer width) {
         this.name = name;
         this.chest = chest;
         this.length = length;
