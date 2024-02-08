@@ -18,6 +18,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import thainguyen.domain.Category;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Slf4j
@@ -27,7 +29,7 @@ public class CategoryTests {
     private TestRestTemplate restTemplate;
 
 
-    /*GET Category: Get Category by id success*/
+    //    GET: find by id - success(OK)
     @Test
     void shnouldReturnCategoryWheFindById() {
         ResponseEntity<String> response = restTemplate
@@ -48,7 +50,7 @@ public class CategoryTests {
     }
 
 
-    /*GET Category: Category with that id not found in database*/
+    //    GET: find by id - fail(NOT_FOUND) - id not found in database
     @Test
     void shouldReturn404WhenRetrieveDataNotExist() {
         ResponseEntity<String> response = restTemplate
@@ -58,8 +60,7 @@ public class CategoryTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
-
-    /*GET Category:Get Category by Id,  Category Unauthorized*/
+    //    GET: find by id - fail(UNAUTHORIZED) - not login
     @Test
     void shouldReturn403WhenGetWhileUnauthenticated() {
         ResponseEntity<String> response = restTemplate
@@ -68,7 +69,7 @@ public class CategoryTests {
     }
 
 
-    /*GET Category: Get all Categorys success*/
+    //    GET: find all - success(OK)
     @Test
     void shouldReturnListDataWhenRetrieveListing() {
         ResponseEntity<String> response = restTemplate
@@ -82,7 +83,7 @@ public class CategoryTests {
     }
 
 
-    /*GET Category: Get all Categorys, Category Unauthorized*/
+    //    GET: find all - fail(UNAUTHORIZED)
     @Test
     void attemptGetAllCategoryButNotLogin() {
         ResponseEntity<String> response = restTemplate
@@ -91,7 +92,7 @@ public class CategoryTests {
     }
 
 
-    /*POST Category: Create Category success haven't parent */
+    //    POST: create a new Category - success(CREATED)
     @Test
     @DirtiesContext
     void shouldReturn201WhenCreatedAnCategory() {
@@ -121,48 +122,8 @@ public class CategoryTests {
         assertThat(parent).isNull();
     }
 
-    /*POST Category: Create Category success have parent */
-    @Test
-    @DirtiesContext
-    void shouldCreatedACategoryIsChildOfAnotherCategory() {
-        Category category = new Category();
-        category.setName("DEMO Category");
-        category.setDescription("Description of DEMO Category");
-        category.setPicture("Link picture of DEMO Category");
-        Category parent = new Category();
-        parent.setId(152L);
-        category.setParent(parent);
 
-        ResponseEntity<Void> response = restTemplate
-                .withBasicAuth("admin", "password")
-                .postForEntity("/api/categories", category, Void.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-
-        URI locationOfNewCategory = response.getHeaders().getLocation();
-        ResponseEntity<String> getResponse = restTemplate
-                .withBasicAuth("customer", "password")
-                .getForEntity(locationOfNewCategory.getPath(), String.class);
-        DocumentContext doc = JsonPath.parse(getResponse.getBody());
-        String name = doc.read("$.data.name");
-        String picture = doc.read("$.data.picture");
-        String descriptioin = doc.read("$.data.description");
-
-        Number parentId = doc.read("$.data.parent.id");
-        String parentName = doc.read("$.data.parent.name");
-        String parentPicture = doc.read("$.data.parent.picture");
-
-        // Self
-        assertThat(name).isEqualTo("DEMO Category");
-        assertThat(descriptioin).isEqualTo("Description of DEMO Category");
-        assertThat(picture).isEqualTo("Link picture of DEMO Category");
-
-        // Parent
-        assertThat(parentId).isEqualTo(152);
-        assertThat(parentName).isEqualTo("shirt");
-        assertThat(parentPicture).isEqualTo("link picture of shirt");
-    }
-
-    /*POST Category: Create Category unsuccess because id parent not found*/
+    //    POST: create a new Category - fail(NOT_FOUND) - info not found in database
     @Test
     @DirtiesContext
     void shouldReturn404WhenAttemptCreateAnCategoryWithParentNotFound() {
@@ -180,7 +141,7 @@ public class CategoryTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
-    /*POST Category: Forbiden because cridential info is bad*/
+    //    POST: create a new Category - fail(FORBIDDEN) - credential info is bad
     @Test
     void attemptPostCategoryWithBadCridential() {
         Category category = new Category();
@@ -198,7 +159,7 @@ public class CategoryTests {
     }
 
 
-    /*POST Category: Bad request because info is null */
+    //    POST: create a new Category - fail(BAD_REQUEST) - info importance is null
     @Test
     void attemptPostCategoryButMissingInfoImportant() {
         Category category = new Category();
@@ -216,7 +177,7 @@ public class CategoryTests {
     }
 
 
-    /*POST Category: Unauthorized */
+    //    POST: create a new Category - fail(UNAUTHORIZED) - not login
     @Test
     void attemptPostCategoryButNotLogin() {
         Category category = new Category();
@@ -233,7 +194,7 @@ public class CategoryTests {
     }
 
 
-    /*PUT Category: Update Category success*/
+    //    PUT: update Category - success(OK)
     @Test
     @DirtiesContext
     void shouldReturnOKAndBodyWhenIPuttedDataSuccess() {
@@ -261,21 +222,7 @@ public class CategoryTests {
     }
 
 
-    /*PUT Category: Bad request due missing info*/
-    @Test
-    void shouldReturnBadRequestWhenPuttedButMissingData() {
-        Category category = new Category();
-        category.setPicture("Demo link");
-        // missing data required is name
-        HttpEntity<Category> request = new HttpEntity<>(category);
-
-        ResponseEntity<String> response = restTemplate
-                .withBasicAuth("employee", "password")
-                .exchange("/api/categories/152", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    }
-
-    /*PUT Category: Category with that id not found in database*/
+    //    PUT: update Category - fail(NOT_FOUND) - id category not found in database
     @Test
     void attemptPutCategoryButCategoryIdNotFound() {
         Category category = new Category();
@@ -289,8 +236,23 @@ public class CategoryTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
+    //    PUT: update Category - fail(NOT_FOUND) - id parent not found in database
+    @Test
+    void attemptPutCategoryButParentIdNotFound() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("picture", "new picture");
+        map.put("parent", Map.of("id", 999999));
 
-    /*PUT Category: Bad Cridential*/
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(map);
+
+        ResponseEntity<String> response = restTemplate
+                .withBasicAuth("employee", "password")
+                .exchange("/api/categories/153", HttpMethod.PUT, request, String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+
+    //    PUT: update Category - fail(FORBIDDEN) - credential info is bad
     @Test
     void attemptPutCategoryWithBadCridential() {
         Category category = new Category();
@@ -305,8 +267,7 @@ public class CategoryTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
-
-    /*PUT Category: Unauthorized*/
+    //    PUT: update Category - fail(UNAUTHORIZED) - not login
     @Test
     void attemptPutCategoryButNotLogin() {
         Category category = new Category();

@@ -25,7 +25,8 @@ public class BrandTests {
     @Autowired
     TestRestTemplate restTemplate;
 
-//GET: Get Brand by id success
+
+//GET: find by id - success(OK)
 
     @Test
     void shouldReturnABrandWhenIFindById() {
@@ -43,7 +44,7 @@ public class BrandTests {
     }
 
 
-//GET: Brand with that id not found in database
+//GET: find by id - fail(NOT_FOUND) - id not found in database
 
     @Test
     void shouldReturnNotFoundStatusWhenIdDoesNotExist() {
@@ -55,7 +56,7 @@ public class BrandTests {
     }
 
 
-//GET:Get Brand by Id,  Brand Unauthorized
+// GET: find by id - fail(UNAUTHORIZED) - not login
 
     @Test
     void shouldReturn403WhenGetThatNotAuthenticated() {
@@ -65,7 +66,7 @@ public class BrandTests {
     }
 
 
-//GET: Get all Brands success
+//GET: find all - success(OK)
 
     @Test
     void shouldReturnListWhenFindAll() {
@@ -81,7 +82,7 @@ public class BrandTests {
 
 
 
-//GET: Get all Brands, Brand Unauthorized
+//GET: find all - fail(UNAUTHORIZED)
 
     @Test
     void shouldReturnUnauthorizedWhenGetListBrandButNotLogin() {
@@ -91,7 +92,8 @@ public class BrandTests {
     }
 
 
-//POST Brand: Create Brand success
+
+//POST: create a new Brand - success(CREATED)
 
     @Test
     @DirtiesContext
@@ -119,7 +121,7 @@ public class BrandTests {
     }
 
 
-//POST Brand: Forbiden because cridential info is bad
+//POST: create a new Brand - fail(FORBIDDEN) - credential info is bad
 
     @Test
     @DirtiesContext
@@ -134,7 +136,7 @@ public class BrandTests {
     }
 
 
-//POST Brand: Bad request because info is null
+//POST: create a new Brand - fail(BAD_REQUEST) - info importance is null
 
     @Test
     @DirtiesContext
@@ -148,7 +150,7 @@ public class BrandTests {
     }
 
 
-//POST Brand: Unauthorized
+//POST: create a new Brand - fail(UNAUTHORIZED) - not login
 
     @Test
     @DirtiesContext
@@ -161,7 +163,7 @@ public class BrandTests {
     }
 
 
-//PUT Brand: Update Brand success
+//PUT: update Brand - success(OK)
 
     @Test
     @DirtiesContext
@@ -185,7 +187,7 @@ public class BrandTests {
     }
 
 
-//PUT: Brand with that id not found in database
+//PUT: update Brand - fail(NOT_FOUND) - id not found in database
 
     @Test
     void shouldReturn404WhenPutDataNotExist() {
@@ -199,7 +201,7 @@ public class BrandTests {
     }
 
 
-//PUT Brand: Bad Cridential
+//PUT: update Brand - fail(FORBIDDEN) - credential info is bad
 
     @Test
     void shouldReturn403WhenPutBrandThatBadCridential() {
@@ -212,7 +214,7 @@ public class BrandTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
-//PUT Brand: Unauthorized
+//PUT: update Brand - fail(UNAUTHORIZED) - not login
 
     @Test
     void attemptPutBrandButNotLogin() {

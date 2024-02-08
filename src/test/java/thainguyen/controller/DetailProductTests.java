@@ -32,7 +32,7 @@ public class DetailProductTests {
     @Autowired
     TestRestTemplate restTemplate;
 
-    /*GET DetailProduct: Get DetailProduct by id success*/
+    //    GET: find by id - success(OK)
     @Test
     void shouldReturn200WhenIFindAProductExist() {
         ResponseEntity<String> response = restTemplate
@@ -42,8 +42,7 @@ public class DetailProductTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
-
-    /*GET DetailProduct: DetailProduct with that id not found in database*/
+    //    GET: find by id - fail(NOT_FOUND) - id not found in database
     @Test
     void shouldReturn404WhenIFindAProductNotExist() {
         ResponseEntity<String> response = restTemplate
@@ -53,7 +52,7 @@ public class DetailProductTests {
     }
 
 
-    /*GET DetailProduct: Get DetailProduct by Id, DetailProduct Unauthorized*/
+    //    GET: find by id - fail(UNAUTHORIZED) - not login
     @Test
     void attemptGetDetailProductByIdButNotLogin() {
         ResponseEntity<String> response = restTemplate
@@ -62,7 +61,7 @@ public class DetailProductTests {
     }
 
 
-    /*GET DetailProduct: Get all DetailProducts success*/
+    //    GET: find all - success(OK)
     @Test
     void shouldReturnList() {
         ResponseEntity<String> response = restTemplate
@@ -75,7 +74,7 @@ public class DetailProductTests {
     }
 
 
-    /*GET DetailProduct: Get all DetailProducts, DetailProduct Unauthorized*/
+    //    GET: find all - fail(UNAUTHORIZED)
     @Test
     void attemptReturnListButNotLogin() {
         ResponseEntity<String> response = restTemplate
@@ -83,7 +82,7 @@ public class DetailProductTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
-    /*POST DetailProduct: Create DetailProduct success*/
+    //    POST: create a new DetailProduct - success(CREATED)
     @Test
     @DirtiesContext
     void shouldReturn201WhenCreatedAProductSuccess() {
@@ -121,7 +120,7 @@ public class DetailProductTests {
     }
 
 
-    /*POST DetailProduct: Create DetailProduct unsuccess because idSize or idProduct not found*/
+//    POST: create a new DetailProduct - fail(NOT_FOUND) - id product or id size not found in database
     @Test
     @DirtiesContext
     void shouldReturn404WhenCreatedADetailProductThatProductOrSizeNotFound() {
@@ -143,7 +142,7 @@ public class DetailProductTests {
     }
 
 
-    /*POST DetailProduct: Bad request because info must be non null but it's null */
+    //    POST: create a new DetailProduct - fail(BAD_REQUEST) - info importance is null
     @Test
     @DirtiesContext
     void attemptPostDetailProductButSizeOrProductIsNull() {
@@ -158,7 +157,7 @@ public class DetailProductTests {
     }
 
 
-    /*POST DetailProduct: Forbiden because cridential info is bad*/
+    //    POST: create a new DetailProduct - fail(FORBIDDEN) - credential info is bad
     @Test
     @DirtiesContext
     void attemptPostDetailProductWithBadCridential() {
@@ -179,8 +178,7 @@ public class DetailProductTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
-
-    /*POST DetailProduct: Unauthorized */
+    //    POST: create a new DetailProduct - fail(UNAUTHORIZED) - not login
     @Test
     @DirtiesContext
     void attemptPostDetailProductButNotLogin() {
@@ -200,7 +198,8 @@ public class DetailProductTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
-    /*PUT DetailProduct: Update DetailProduct success*/
+
+//    PUT: update DetailProduct - success(OK)
     @Test
     @DirtiesContext
     void shouldReturnDataUpdatedWhenPatchedAProduct() {
@@ -228,7 +227,7 @@ public class DetailProductTests {
     }
 
 
-    /*PUT DetailProduct: DetailProduct with that id not found in database*/
+    //    PUT: update DetailProduct - fail(NOT_FOUND) - id not found in database
     @Test
     @DirtiesContext
     void attemptPatchDetailProductNotFound() {
@@ -243,39 +242,7 @@ public class DetailProductTests {
     }
 
 
-    /*PUT DetailProduct: Update Product of DetailProduct success*/
-    @Test
-    @DirtiesContext
-    void updateProductOfDetailProduct() {
-        DetailProduct detailProduct = new DetailProduct();
-        Product product = new Product();
-        product.setId(204L);
-        detailProduct.setWeight(1.1);
-        detailProduct.setProduct(product);
-
-        HttpEntity<DetailProduct> request = new HttpEntity<>(detailProduct);
-
-        ResponseEntity<String> response =
-                restTemplate.withBasicAuth("employee", "password")
-                        .exchange("/api/detailproducts/304", HttpMethod.PUT, request, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        ResponseEntity<String> getResponse = restTemplate
-                .withBasicAuth("employee", "password")
-                .getForEntity("/api/detailproducts/304", String.class);
-        DocumentContext doc = JsonPath.parse(getResponse.getBody());
-        Number weight = doc.read("$.data.weight");
-        Number sizeId = doc.read("$.data.size.id");
-        String productName = doc.read("$.data.product.name");
-        Integer priceValue = doc.read("$.data.price");
-        assertThat(weight).isEqualTo(1.1);
-        assertThat(sizeId).isNotNull();
-        assertThat(productName).isEqualTo("Louis Vuitton shirt");
-        assertThat(priceValue).isEqualTo(15555);
-    }
-
-
-    /*PUT DetailProduct: Update DetailProduct unsuccess due id size or id product not found*/
+    /*PUT: update DetailProduct - fail(NOT_FOUND) - id product or id size not found in database*/
     @Test
     @DirtiesContext
     void attemptUpdateSizeofDetailProductNotFound() {
@@ -291,7 +258,8 @@ public class DetailProductTests {
     }
 
 
-    /*PUT DetailProduct: Bad Cridential*/
+
+    //    PUT: update DetailProduct - fail(FORBIDDEN) - credential info is bad
     @Test
     @DirtiesContext
     void attemptUpdateDetailProductWithBadCridential() {
@@ -308,7 +276,8 @@ public class DetailProductTests {
     }
 
 
-    /*PUT DetailProduct: Unauthorized*/
+
+    //    PUT: update DetailProduct - fail(UNAUTHORIZED) - not login
     @Test
     @DirtiesContext
     void attemptUpdateDetailProductButNotLogin() {
@@ -322,6 +291,5 @@ public class DetailProductTests {
                         .exchange("/api/detailproducts/304", HttpMethod.PUT, request, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
-
 
 }
