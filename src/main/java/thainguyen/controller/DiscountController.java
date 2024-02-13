@@ -4,10 +4,9 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
-import thainguyen.controller.conf.ResponseComponent;
+import thainguyen.controller.custom.ResponseComponent;
 import thainguyen.controller.exception.DiscountInvalidException;
 import thainguyen.domain.Discount;
 import thainguyen.service.discount.DiscountService;
@@ -16,7 +15,6 @@ import thainguyen.utilities.ValidateUtil;
 
 import java.net.URI;
 import java.sql.SQLIntegrityConstraintViolationException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 

@@ -6,19 +6,20 @@ import thainguyen.domain.valuetypes.Status;
 import thainguyen.service.generic.GenericService;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface OrderService extends GenericService<Order> {
     List<Order> findByOwner(String username);
 
-    Order findByIdAndOwner(Long id, String username);
+    Order findByIdAndOwner(UUID id, String username);
 
-    Status getStatus(Long id, String username);
+    Status getStatus(UUID id, String username);
 
     Order create(Order order, String username);
 
     Order create(Order order);
 
-    void cancel(String orderId) throws GhtkCreateOrderFailedException;
+    void cancel(UUID orderId) throws GhtkCreateOrderFailedException;
 
-    Order updateStatus(Long orderId, Status status);
+    Order updateStatus(UUID orderId, Status status);
 }

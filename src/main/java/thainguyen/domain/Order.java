@@ -25,8 +25,8 @@ import static thainguyen.domain.Constants.SEQUENCE_GENERATOR;
 public class Order {
 
     @Id
-    @GeneratedValue(generator = SEQUENCE_GENERATOR)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(targetEntity = User.class)
     private User user;

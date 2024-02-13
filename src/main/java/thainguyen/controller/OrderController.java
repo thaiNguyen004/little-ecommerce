@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
-import thainguyen.controller.conf.ResponseComponent;
+import thainguyen.controller.custom.ResponseComponent;
 import thainguyen.controller.exception.GhtkCreateOrderFailedException;
 import thainguyen.domain.Discount;
 import thainguyen.domain.LineItem;
@@ -21,6 +21,7 @@ import thainguyen.service.shipment.ShipmentService;
 import java.net.URI;
 import java.security.Principal;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/api/orders", produces = "application/json")
@@ -32,7 +33,7 @@ public class OrderController {
     private final ShipmentService shipmentService;
 
     @GetMapping(value = "/{id}")
-    private ResponseEntity<ResponseComponent<Order>> findById(@PathVariable Long id, Principal principal) {
+    private ResponseEntity<ResponseComponent<Order>> findById(@PathVariable UUID id, Principal principal) {
         Order order = orderService.findByIdAndOwner(id, principal.getName());
         ResponseComponent<Order> response = ResponseComponent
                 .<Order>builder()
@@ -139,14 +140,14 @@ public class OrderController {
     }
 
     @PutMapping(value = "/cancel")
-    private ResponseEntity<ResponseComponent<Void>> cancelOrder(@RequestParam("order_id") Long orderId, Principal principal) {
+    private ResponseEntity<ResponseComponent<Void>> cancelOrder(@RequestParam("order_id") UUID orderId, Principal principal) {
         Status status = orderService.getStatus(orderId, principal.getName());
         if (status == null) {
             ResponseComponent<Void> response = ResponseComponent
                     .<Void>builder()
                     .success(false)
                     .status(HttpStatus.NOT_FOUND)
-                    .message(new StringBuilder().append("Order with id = ").append(orderId)
+                    .message(new StringBuilder().append("Order with id ").append(orderId)
                             .append(" not exist").toString())
                     .build();
             return new ResponseEntity<>(response, response.getStatus());
@@ -181,7 +182,7 @@ public class OrderController {
             return new ResponseEntity<>(response, response.getStatus());
         } else if (status.equals(Status.PENDING)) {
             try {
-                orderService.cancel(orderId.toString());
+                orderService.cancel(orderId);
                 orderService.updateStatus(orderId, Status.CANCEL);
                 ResponseComponent<Void> response = ResponseComponent
                         .<Void>builder()

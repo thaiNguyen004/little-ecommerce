@@ -1,6 +1,5 @@
 package thainguyen.controller;
 
-import jakarta.persistence.NoResultException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -8,9 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
-import thainguyen.controller.conf.ResponseComponent;
-import thainguyen.domain.Brand;
-import thainguyen.domain.Category;
+import thainguyen.controller.custom.ResponseComponent;
 import thainguyen.domain.Product;
 import thainguyen.service.brand.BrandService;
 import thainguyen.service.category.CategoryService;

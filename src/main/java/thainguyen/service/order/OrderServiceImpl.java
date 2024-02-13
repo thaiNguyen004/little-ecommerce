@@ -22,6 +22,7 @@ import thainguyen.service.user.UserService;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,7 +58,7 @@ public class OrderServiceImpl extends GenericServiceImpl<Order>
     }
 
     @Override
-    public Order findByIdAndOwner(Long id, String username) {
+    public Order findByIdAndOwner(UUID id, String username) {
         Optional<Order> orderOpt = orderRepo.findByIdAndUsername(id, username);
         return orderOpt.orElseThrow(() ->
                 new NoResultException("No found order with id = "
@@ -100,9 +101,9 @@ public class OrderServiceImpl extends GenericServiceImpl<Order>
     }
 
     @Override
-    public void cancel(String orderId) throws GhtkCreateOrderFailedException {
+    public void cancel(UUID orderId) throws GhtkCreateOrderFailedException {
         UriComponentsBuilder builder = UriComponentsBuilder
-                .fromUriString(Constants.URI_GHTK_ORDER_CANCEL + "/partner_id:" + orderId);
+                .fromUriString(Constants.URI_GHTK_ORDER_CANCEL + "/partner_id:" + orderId.toString());
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.add("Token", Constants.TOKEN);
@@ -117,15 +118,15 @@ public class OrderServiceImpl extends GenericServiceImpl<Order>
     }
 
     @Override
-    public Status getStatus(Long id, String username) {
+    public Status getStatus(UUID id, String username) {
         return orderRepo.getStatus(id, username);
     }
 
     @Override
-    public Order updateStatus(Long orderId, Status status) {
+    public Order updateStatus(UUID orderId, Status status) {
         return orderRepo.findById(orderId).map(order -> {
             order.setStatus(status);
             return orderRepo.save(order);
-        }).orElseGet(() -> null);
+        }).orElseThrow(() -> new NoResultException("Invalid Order ID, Order not found"));
     }
 }

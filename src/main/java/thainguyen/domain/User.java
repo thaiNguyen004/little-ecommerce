@@ -54,7 +54,6 @@ public class User implements UserDetails {
     @Min(value = 18, message = "Minimum age is 18")
     private Integer age;
 
-    @NotBlank(message = "Avatar attribute must not be null and empty!")
     private String avatar;
 
     @NotNull(message = "Position attribute must not be null!")

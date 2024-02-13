@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
-import thainguyen.controller.conf.ResponseComponent;
+import thainguyen.controller.custom.ResponseComponent;
 import thainguyen.domain.Brand;
 import thainguyen.service.brand.BrandService;
 import thainguyen.utilities.ObjectMapperUtil;

@@ -1,4 +1,4 @@
-package thainguyen.controller.conf;
+package thainguyen.controller.custom;
 
 import jakarta.persistence.NoResultException;
 import jakarta.validation.ConstraintViolation;
@@ -21,6 +21,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import thainguyen.controller.exception.DiscountInvalidException;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
@@ -31,6 +32,8 @@ import java.util.Objects;
 @ControllerAdvice
 public class CustomRestExceptionHandler
         extends ResponseEntityExceptionHandler {
+
+
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
@@ -225,4 +228,17 @@ public class CustomRestExceptionHandler
                 .build();
         return handleExceptionInternal(ex, responseComponent, new HttpHeaders(), responseComponent.getStatus(), request);
     }
+
+
+    @ExceptionHandler(DiscountInvalidException.class)
+    public ResponseEntity<Object> handleConversionFailedException(final DiscountInvalidException ex, WebRequest request) {
+        ResponseComponent<?> responseComponent = ResponseComponent.builder()
+                .status(HttpStatus.BAD_REQUEST)
+                .success(false)
+                .message("Method argument not valid")
+                .errors(List.of(ex.getMessage()))
+                .build();
+        return handleExceptionInternal(ex, responseComponent, new HttpHeaders(), responseComponent.getStatus(), request);
+    }
+
 }
