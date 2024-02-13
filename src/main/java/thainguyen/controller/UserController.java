@@ -8,13 +8,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
-import thainguyen.controller.conf.ResponseComponent;
+import thainguyen.controller.custom.ResponseComponent;
+import thainguyen.domain.Order;
 import thainguyen.domain.User;
 import thainguyen.service.user.UserService;
 import thainguyen.utilities.ObjectMapperUtil;
 import thainguyen.utilities.ValidateUtil;
 
 import java.net.URI;
+import java.security.Principal;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 import java.util.Map;
@@ -82,9 +84,20 @@ public class UserController {
                 .success(true)
                 .status(HttpStatus.OK)
                 .message("Update User success")
-                .data(user)
+                .data(updatedUser)
                 .build();
         return new ResponseEntity<>(response, response.getStatus());
     }
 
+    @GetMapping(value = "/orders")
+    private ResponseEntity<ResponseComponent<List<Order>>> getAllOrderOwn(Principal principal) {
+        List<Order> ordersOwn = service.findAllOrdersOwn(principal.getName());
+        ResponseComponent<List<Order>> response = ResponseComponent
+                .<List<Order>>builder()
+                .success(true)
+                .status(HttpStatus.OK)
+                .data(ordersOwn)
+                .build();
+        return new ResponseEntity<>(response, response.getStatus());
+    }
 }
