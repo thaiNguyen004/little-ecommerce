@@ -3,12 +3,9 @@ package thainguyen.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import thainguyen.domain.converter.PriceConverter;
-import thainguyen.domain.valuetypes.Price;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -35,11 +32,9 @@ public class Shipment {
     private String labelCode;
 
     @NotNull(message = "fee attribute must not be null")
-    @Size(min = 1, message = "fee's minimum value is 1")
     private Integer fee;
 
     @NotNull(message = "insuranceFee attribute must not be null")
-    @Size(min = 0, message = "insuranceFee's minimum value is 0")
     private Integer insuranceFee;
 
     @NotNull(message = "estimatedPickTime attribute must not be null")

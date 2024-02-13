@@ -30,20 +30,21 @@ public class DetailProduct {
     private String name;
 
     @ManyToOne
-    @NotNull
+    @NotNull(message = "size attribute must not be null")
     private Size size;
 
     @ManyToOne
-    @NotNull
+    @NotNull(message = "product attribute must not be null")
     private Product product;
 
-    @NotNull
+    @NotNull(message = "price attribute must not be null")
     @Min(value = 1000, message = "Price of detail product required greater than 1000 VND")
     private Integer price;
 
-    @NotNull
+    @NotNull(message = "weight attribute must not be null")
     @DecimalMin(value = "0.01", message = "Weigh of detail product require greater than 10g")
     private Double weight;
+
     private LocalDateTime createdAt;
     @UpdateTimestamp
     private LocalDateTime updatedAt;

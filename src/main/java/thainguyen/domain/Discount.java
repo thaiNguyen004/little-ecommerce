@@ -9,7 +9,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -32,27 +31,28 @@ public class Discount {
     @JsonIgnore
     private Set<Order> order = new HashSet<>();
 
-    @NotNull
-    @NotBlank(message = "Code attribute must not be null or empty!")
+    @NotBlank(message = "code attribute must not be null or empty!")
     @Column(unique = true)
     private String code;
 
     @Enumerated(EnumType.STRING)
-    @NotNull
+    @NotNull(message = "type attribute must not be null")
     private Type type;
 
     @Enumerated(EnumType.STRING)
-    @NotNull
+    @NotNull(message = "kind attribute must not be null")
     private Kind kind;
 
     @Min(value = 1, message = "Discount's value require greater than 1")
-    @NotNull(message = "Value attribute must not be null")
+    @NotNull(message = "value attribute must not be null")
     private Integer value;
 
-    @NotNull(message = "Quantity attribute must not be null")
+    @NotNull(message = "quantity attribute must not be null")
     private Integer quantity;
 
+    @NotNull(message = "start attribute must not be null")
     private LocalDateTime start;
+    @NotNull(message = "end attribute must not be null")
     private LocalDateTime end;
 
     public static enum Type {

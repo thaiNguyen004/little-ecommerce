@@ -1,6 +1,5 @@
 package thainguyen.controller;
 
-import jakarta.persistence.NoResultException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
-import thainguyen.controller.conf.ResponseComponent;
+import thainguyen.controller.custom.ResponseComponent;
 import thainguyen.domain.*;
 import thainguyen.service.detailproduct.DetailProductService;
 import thainguyen.service.product.ProductService;

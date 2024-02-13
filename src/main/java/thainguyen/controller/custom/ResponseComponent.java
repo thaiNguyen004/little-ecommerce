@@ -1,4 +1,4 @@
-package thainguyen.controller.conf;
+package thainguyen.controller.custom;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
