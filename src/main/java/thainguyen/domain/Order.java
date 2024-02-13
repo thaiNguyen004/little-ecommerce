@@ -2,6 +2,7 @@ package thainguyen.domain;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -15,13 +16,12 @@ import thainguyen.domain.valuetypes.Status;
 import java.time.LocalDateTime;
 import java.util.*;
 
-import static thainguyen.domain.Constants.SEQUENCE_GENERATOR;
-
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @Table(name = "Orders")
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Order {
 
     @Id
@@ -81,4 +81,20 @@ public class Order {
         lineItem.setOrder(this);
     }
 
+    /*Custom constructor*/
+
+    public Order(UUID id, Address address,
+                 Integer totalPriceBeforeDiscount,
+                 Integer totalPriceAfterDiscount,
+                 Status status,
+                 LocalDateTime placedAt,
+                 LocalDateTime modifiedAt) {
+        this.id = id;
+        this.address = address;
+        this.totalPriceBeforeDiscount = totalPriceBeforeDiscount;
+        this.totalPriceAfterDiscount = totalPriceAfterDiscount;
+        this.status = status;
+        this.placedAt = placedAt;
+        this.modifiedAt = modifiedAt;
+    }
 }

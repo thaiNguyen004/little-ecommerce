@@ -88,20 +88,20 @@ public class Develop {
             sizeS.setBrand(brand1);
             sizeRepo.save(sizeS);
 
-            DetailProduct detailProduct1 = new DetailProduct("detail product 1 with size S", 1.1, sizeS
+            DetailProduct detailProduct1 = new DetailProduct(1.1, sizeS
                     , 60000);
             detailProduct1.setProduct(product3);
             detailProduct1.setWeight(1.1);
             detailProductRepo.save(detailProduct1);
 
 
-            DetailProduct detailProduct2 = new DetailProduct("detail product 2 with size S", 0.5, sizeS
+            DetailProduct detailProduct2 = new DetailProduct(0.5, sizeS
                     , 120000);
             detailProduct2.setProduct(product1);
             detailProductRepo.save(detailProduct2);
 
 
-            DetailProduct detailProduct3 = new DetailProduct("detail product 3 with size M", 1222.25, sizeM,
+            DetailProduct detailProduct3 = new DetailProduct(1222.25, sizeM,
                     15555);
             detailProduct3.setProduct(product2);
             detailProductRepo.save(detailProduct3);
