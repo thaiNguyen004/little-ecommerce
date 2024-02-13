@@ -94,7 +94,7 @@ public class ShipmentServiceImpl extends GenericServiceImpl<Shipment>
 
         for (LineItem lineItem : lineItems) {
             DetailProduct detailProduct = lineItem.getDetailProduct();
-            products.add(new GhtkForm.GhtkProductForm(detailProduct.getName()
+            products.add(new GhtkForm.GhtkProductForm(detailProduct.getProduct().getName()
                     , detailProduct.getWeight(), lineItem.getQuantity(), detailProduct.getId()));
         }
 

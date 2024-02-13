@@ -1,9 +1,9 @@
 package thainguyen.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,10 +24,8 @@ public class DetailProduct {
     private Long id;
 
     @Version
+    @JsonIgnore
     private Long version;
-
-    @NotBlank(message = "Name attribute must not be null and empty!")
-    private String name;
 
     @ManyToOne
     @NotNull(message = "size attribute must not be null")
@@ -55,8 +53,7 @@ public class DetailProduct {
     }
 
     /*Custom constructor*/
-    public DetailProduct(String name, Double weight, Size size, int price) {
-        this.name = name;
+    public DetailProduct(Double weight, Size size, int price) {
         this.weight = weight;
         this.size = size;
         this.price = price;

@@ -3,12 +3,16 @@ package thainguyen.service.user;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import thainguyen.data.OrderRepository;
 import thainguyen.data.UserRepository;
+import thainguyen.domain.Order;
 import thainguyen.domain.User;
 import thainguyen.service.generic.GenericServiceImpl;
 
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -17,11 +21,17 @@ public class UserServiceImpl extends GenericServiceImpl<User>
         implements UserService {
 
     private final UserRepository repo;
+    private final OrderRepository orderRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserServiceImpl(EntityManager em, UserRepository repo) {
+    public UserServiceImpl(EntityManager em, UserRepository repo
+            , OrderRepository orderRepository, PasswordEncoder passwordEncoder) {
+
         super(em, User.class);
         this.repo = repo;
+        this.orderRepository = orderRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -39,6 +49,7 @@ public class UserServiceImpl extends GenericServiceImpl<User>
             throw new SQLIntegrityConstraintViolationException("User with email " + user.getEmail() + " already existed");
         if (isUsernameExist)
             throw new SQLIntegrityConstraintViolationException("User with username " + user.getUsername() + " already existed");
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         return repo.save(user);
     }
 
@@ -70,5 +81,12 @@ public class UserServiceImpl extends GenericServiceImpl<User>
             userPersist.setGender(user.getGender());
         }
         return repo.save(userPersist);
+    }
+
+    @Override
+    public List<Order> findAllOrdersOwn(String username) {
+        List<Order> orders = orderRepository.findByUsername(username);
+        if (! orders.isEmpty()) return orders;
+        throw new NoResultException("Orders list not found");
     }
 }
