@@ -1,14 +1,31 @@
 package thainguyen;
 
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.transaction.annotation.Transactional;
-import thainguyen.data.*;
-import thainguyen.domain.*;
-import thainguyen.domain.valuetypes.Price;
-import thainguyen.domain.valuetypes.Status;
+import thainguyen.address.Address;
+import thainguyen.brand.Brand;
+import thainguyen.brand.BrandRepository;
+import thainguyen.category.Category;
+import thainguyen.category.CategoryRepository;
+import thainguyen.detailproduct.DetailProduct;
+import thainguyen.detailproduct.DetailProductRepository;
+import thainguyen.discount.Discount;
+import thainguyen.discount.DiscountRepository;
+import thainguyen.payment.Payment;
+import thainguyen.payment.PaymentRepository;
+import thainguyen.valuetype.Price;
+import thainguyen.valuetype.Status;
+import thainguyen.lineitem.LineItem;
+import thainguyen.lineitem.LineItemRepository;
+import thainguyen.order.Order;
+import thainguyen.order.OrderRepository;
+import thainguyen.product.Product;
+import thainguyen.product.ProductRepository;
+import thainguyen.size.Size;
+import thainguyen.size.SizeRepository;
+import thainguyen.user.User;
+import thainguyen.user.UserRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

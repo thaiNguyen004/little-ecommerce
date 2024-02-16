@@ -13,8 +13,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import thainguyen.data.UserRepository;
-import thainguyen.domain.User;
+import thainguyen.user.UserRepository;
+import thainguyen.user.User;
 
 import java.util.Optional;
 

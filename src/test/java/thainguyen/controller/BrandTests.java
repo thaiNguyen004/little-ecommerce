@@ -12,7 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
 import org.springframework.test.annotation.DirtiesContext;
-import thainguyen.domain.Brand;
+import thainguyen.brand.Brand;
 
 import java.net.URI;
 import java.util.HashMap;
