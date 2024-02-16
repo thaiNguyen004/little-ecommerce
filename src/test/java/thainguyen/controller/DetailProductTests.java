@@ -87,7 +87,6 @@ public class DetailProductTests {
     @DirtiesContext
     void shouldReturn201WhenCreatedAProductSuccess() {
         DetailProduct detailProduct = new DetailProduct();
-        detailProduct.setName("demo name");
         detailProduct.setWeight(999.99);
         Size size = new Size();
         size.setId(253L);
@@ -125,7 +124,6 @@ public class DetailProductTests {
     @DirtiesContext
     void shouldReturn404WhenCreatedADetailProductThatProductOrSizeNotFound() {
         DetailProduct detailProduct = new DetailProduct();
-        detailProduct.setName("detail product name");
         Size size = new Size();
         size.setId(9999L);
         detailProduct.setSize(size);
@@ -162,7 +160,6 @@ public class DetailProductTests {
     @DirtiesContext
     void attemptPostDetailProductWithBadCridential() {
         DetailProduct detailProduct = new DetailProduct();
-        detailProduct.setName("demo detailproduct name");
         Size size = new Size();
         size.setId(252L);
         detailProduct.setSize(size);
@@ -183,7 +180,6 @@ public class DetailProductTests {
     @DirtiesContext
     void attemptPostDetailProductButNotLogin() {
         DetailProduct detailProduct = new DetailProduct();
-        detailProduct.setName("demo detailproduct name");
         Size size = new Size();
         size.setId(252L);
         detailProduct.setSize(size);

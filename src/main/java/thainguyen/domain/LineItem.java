@@ -13,6 +13,9 @@ import static thainguyen.domain.Constants.SEQUENCE_GENERATOR;
 @Getter
 @Setter
 @NoArgsConstructor
+@Table(indexes = {
+        @Index(name = "ID_IDX", columnList = "id")
+})
 public class LineItem {
 
     @Id

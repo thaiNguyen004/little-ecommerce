@@ -1,7 +1,7 @@
 package thainguyen.service.user;
 
-import thainguyen.domain.Order;
 import thainguyen.domain.User;
+import thainguyen.dto.order.OrderSimpleDto;
 import thainguyen.service.generic.GenericService;
 
 import java.sql.SQLIntegrityConstraintViolationException;
@@ -15,6 +15,6 @@ public interface UserService extends GenericService<User> {
 
     User updateUser(Long id, User user);
 
-    List<Order> findAllOrdersOwn(String username);
+    List<OrderSimpleDto> findAllOrderSimpleDtoOwn(String username);
 
 }
