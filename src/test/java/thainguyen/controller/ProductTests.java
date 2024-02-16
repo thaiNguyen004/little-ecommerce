@@ -16,9 +16,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
-import thainguyen.domain.Brand;
-import thainguyen.domain.Category;
-import thainguyen.domain.Product;
+import thainguyen.brand.Brand;
+import thainguyen.category.Category;
+import thainguyen.product.Product;
 
 import java.net.URI;
 import java.util.HashMap;

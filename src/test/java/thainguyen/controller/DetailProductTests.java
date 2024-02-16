@@ -12,14 +12,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
-import thainguyen.domain.DetailProduct;
-import thainguyen.domain.Product;
-import thainguyen.domain.Size;
-import thainguyen.domain.valuetypes.Price;
+import thainguyen.detailproduct.DetailProduct;
+import thainguyen.product.Product;
+import thainguyen.size.Size;
 
-import java.math.BigDecimal;
 import java.net.URI;
-import java.util.Currency;
 import java.util.HashMap;
 import java.util.Map;
 

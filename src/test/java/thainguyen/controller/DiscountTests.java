@@ -13,7 +13,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
-import thainguyen.domain.Discount;
+import thainguyen.discount.Discount;
 
 import java.net.URI;
 import java.time.LocalDateTime;

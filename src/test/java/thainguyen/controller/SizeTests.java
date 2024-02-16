@@ -12,10 +12,10 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
-import thainguyen.data.SizeRepository;
-import thainguyen.domain.Brand;
-import thainguyen.domain.Category;
-import thainguyen.domain.Size;
+import thainguyen.size.SizeRepository;
+import thainguyen.brand.Brand;
+import thainguyen.category.Category;
+import thainguyen.size.Size;
 
 import java.net.URI;
 import java.util.HashMap;
