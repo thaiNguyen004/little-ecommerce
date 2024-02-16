@@ -2,37 +2,39 @@ package thainguyen.service.user;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
+import jakarta.persistence.criteria.JoinType;
+import org.hibernate.Session;
+import org.hibernate.query.criteria.HibernateCriteriaBuilder;
+import org.hibernate.query.criteria.JpaCriteriaQuery;
+import org.hibernate.query.criteria.JpaJoin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import thainguyen.data.OrderRepository;
 import thainguyen.data.UserRepository;
-import thainguyen.domain.Order;
-import thainguyen.domain.User;
+import thainguyen.domain.*;
+import thainguyen.dto.order.OrderSimpleDto;
 import thainguyen.service.generic.GenericServiceImpl;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 import java.util.Optional;
 
-
 @Service
 public class UserServiceImpl extends GenericServiceImpl<User>
         implements UserService {
 
     private final UserRepository repo;
-    private final OrderRepository orderRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EntityManager em;
 
     @Autowired
-    public UserServiceImpl(EntityManager em, UserRepository repo
-            , OrderRepository orderRepository, PasswordEncoder passwordEncoder) {
-
+    public UserServiceImpl(EntityManager em, UserRepository repo, PasswordEncoder passwordEncoder) {
         super(em, User.class);
+        this.em = em;
         this.repo = repo;
-        this.orderRepository = orderRepository;
         this.passwordEncoder = passwordEncoder;
     }
+
 
     @Override
     public User findByUsername(String username) {
@@ -40,6 +42,7 @@ public class UserServiceImpl extends GenericServiceImpl<User>
         String messageError = "Invalid " + " UserID, " + " user not found";
         return userOpt.orElseThrow(() -> new NoResultException(messageError));
     }
+
 
     @Override
     public User create(User user) throws SQLIntegrityConstraintViolationException {
@@ -52,6 +55,7 @@ public class UserServiceImpl extends GenericServiceImpl<User>
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return repo.save(user);
     }
+
 
     @Override
     public User updateUser(Long id, User user) {
@@ -83,10 +87,69 @@ public class UserServiceImpl extends GenericServiceImpl<User>
         return repo.save(userPersist);
     }
 
+
     @Override
-    public List<Order> findAllOrdersOwn(String username) {
-        List<Order> orders = orderRepository.findByUsername(username);
-        if (! orders.isEmpty()) return orders;
-        throw new NoResultException("Orders list not found");
+    public List<OrderSimpleDto> findAllOrderSimpleDtoOwn(String username) {
+        HibernateCriteriaBuilder builder = em.unwrap(Session.class).getCriteriaBuilder();
+        JpaCriteriaQuery<OrderSimpleDto> mainQuery = builder.createQuery(OrderSimpleDto.class);
+        var orderRoot = mainQuery.from(Order.class);
+        var lineItemJoin = orderRoot.join(LineItem.class);
+
+        var subQueryCountLineItem = mainQuery.subquery(Long.class);
+        var subCountLineItemRoot = subQueryCountLineItem.from(LineItem.class);
+        subQueryCountLineItem
+                .select(builder.count(subCountLineItemRoot.get("id")))
+                .where(builder.equal(
+                        subCountLineItemRoot.get("order").get("id"),
+                        orderRoot.get("id")
+                ));
+
+        // subQuery to get limit 1 lineItem for each order
+        var subQueryLimit = mainQuery.subquery(Long.class);
+        var subLineItemRoot = subQueryLimit.from(LineItem.class);
+        subQueryLimit.select(subLineItemRoot.get("id"))
+                .where(builder.equal(
+                                orderRoot.get("id")
+                                , subLineItemRoot.get("order").get("id")
+                        )
+                ).fetch(1);
+
+        lineItemJoin.on(builder.equal(
+                lineItemJoin.get("id")
+                , subQueryLimit
+        ));
+
+        // Joins
+        var userJoin = orderRoot.join("user");
+        JpaJoin<LineItem, DetailProduct> detailProductJoin = lineItemJoin.join("detailProduct", JoinType.LEFT);
+        JpaJoin<DetailProduct, Product> productJoin = detailProductJoin.join("product");
+        JpaJoin<Size, DetailProduct> sizeJoin = detailProductJoin.join("size");
+
+        mainQuery.select(builder.construct(
+                OrderSimpleDto.class,
+                orderRoot.get("id").alias("orderId"),
+                subQueryCountLineItem.alias("numberOfLineItem"),
+                productJoin.get("name").alias("productName"),
+                productJoin.get("picture").alias("productPicture"),
+                sizeJoin.get("name").alias("sizeName"),
+                lineItemJoin.get("amount").alias("amount"),
+                lineItemJoin.get("quantity").alias("quantity"),
+                orderRoot.get("totalPriceBeforeDiscount"),
+                orderRoot.get("totalPriceAfterDiscount"),
+                orderRoot.get("status"),
+                orderRoot.get("placedAt"),
+                orderRoot.get("modifiedAt")
+        )).where(builder.equal(
+                userJoin.get("username"),
+                username
+        ));
+
+        // execute
+        List<OrderSimpleDto> result = em.createQuery(mainQuery).getResultList();
+        if (result.isEmpty()) {
+            throw new NoResultException("Orders list not found");
+        }
+        return result;
     }
+
 }

@@ -13,6 +13,7 @@ import lombok.Setter;
 import org.hibernate.annotations.UpdateTimestamp;
 import thainguyen.domain.valuetypes.Status;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -22,13 +23,13 @@ import java.util.*;
 @NoArgsConstructor
 @Table(name = "Orders")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Order {
+public class Order implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(targetEntity = User.class)
+    @ManyToOne(targetEntity = User.class, fetch = FetchType.LAZY)
     private User user;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "order", cascade = CascadeType.PERSIST)
@@ -37,12 +38,12 @@ public class Order {
     @Valid
     private List<LineItem> lineItems = new ArrayList<>();
 
-    @OneToOne(cascade = CascadeType.PERSIST)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @NotNull(message = "address of the order must not be null")
     @Valid
     private Address address;
 
-    @OneToOne(cascade = CascadeType.PERSIST)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(unique = true)
     private Shipment shipment;
 

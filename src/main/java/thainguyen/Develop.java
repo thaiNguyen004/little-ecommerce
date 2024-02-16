@@ -17,8 +17,8 @@ import java.util.Currency;
 @Configuration
 public class Develop {
 
-    @Bean
-    @Transactional
+    /*@Bean
+    @Transactional*/
     public CommandLineRunner data (BrandRepository brandRepo,
                                    CategoryRepository categoryRepo,
                                    ProductRepository productRepo,

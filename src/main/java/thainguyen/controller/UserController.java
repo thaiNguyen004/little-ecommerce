@@ -9,8 +9,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 import thainguyen.controller.custom.ResponseComponent;
-import thainguyen.domain.Order;
 import thainguyen.domain.User;
+import thainguyen.dto.order.OrderSimpleDto;
 import thainguyen.service.user.UserService;
 import thainguyen.utilities.ObjectMapperUtil;
 import thainguyen.utilities.ValidateUtil;
@@ -90,10 +90,10 @@ public class UserController {
     }
 
     @GetMapping(value = "/orders")
-    private ResponseEntity<ResponseComponent<List<Order>>> getAllOrderOwn(Principal principal) {
-        List<Order> ordersOwn = service.findAllOrdersOwn(principal.getName());
-        ResponseComponent<List<Order>> response = ResponseComponent
-                .<List<Order>>builder()
+    private ResponseEntity<ResponseComponent<List<OrderSimpleDto>>> getAllOrderOwn(Principal principal) {
+        List<OrderSimpleDto> ordersOwn = service.findAllOrderSimpleDtoOwn(principal.getName());
+        ResponseComponent<List<OrderSimpleDto>> response = ResponseComponent
+                .<List<OrderSimpleDto>>builder()
                 .success(true)
                 .status(HttpStatus.OK)
                 .data(ordersOwn)
