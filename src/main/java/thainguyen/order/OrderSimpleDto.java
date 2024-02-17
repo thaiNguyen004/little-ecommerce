@@ -15,6 +15,7 @@ import java.util.UUID;
 public class OrderSimpleDto {
     private UUID orderId;
     private Long numberOfLineItem;
+    private Long productId;
     private String productName;
     private String productPicture;
     private Size.Name sizeName;
