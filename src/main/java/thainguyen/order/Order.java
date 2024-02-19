@@ -53,9 +53,9 @@ public class Order implements Serializable {
     @JoinColumn(unique = true)
     private Shipment shipment;
 
-    @OneToMany(mappedBy = "order",fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JsonIgnore
-    private List<Payment> payments = new ArrayList<>();
+    private Payment payment = new Payment();
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<Discount> discounts = new ArrayList<>();

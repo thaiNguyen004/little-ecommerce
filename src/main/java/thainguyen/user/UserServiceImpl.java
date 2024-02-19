@@ -3,19 +3,28 @@ package thainguyen.user;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.Tuple;
+import jakarta.persistence.criteria.JoinType;
 import org.hibernate.Session;
 import org.hibernate.query.criteria.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import thainguyen.address.Address;
 import thainguyen.detailproduct.DetailProduct;
+import thainguyen.detailproduct.DetailProduct_;
+import thainguyen.lineitem.LineItem_;
 import thainguyen.order.OrderDetailDto;
 import thainguyen.order.OrderSimpleDto;
 import thainguyen.lineitem.LineItem;
 import thainguyen.order.Order;
+import thainguyen.order.Order_;
+import thainguyen.payment.Payment;
 import thainguyen.product.Product;
 import thainguyen.generic.GenericServiceImpl;
+import thainguyen.shipment.Shipment;
 import thainguyen.size.Size;
+import thainguyen.tracking.Tracking;
+import thainguyen.tracking.TrackingDAO;
 import thainguyen.valuetype.Status;
 
 import java.sql.SQLIntegrityConstraintViolationException;
@@ -23,6 +32,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl extends GenericServiceImpl<User>
@@ -31,13 +41,16 @@ public class UserServiceImpl extends GenericServiceImpl<User>
     private final UserRepository repo;
     private final PasswordEncoder passwordEncoder;
     private final EntityManager em;
+    private final TrackingDAO trackingDAO;
 
     @Autowired
-    public UserServiceImpl(EntityManager em, UserRepository repo, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(EntityManager em, UserRepository repo
+            , PasswordEncoder passwordEncoder, TrackingDAO trackingDAO) {
         super(em, User.class);
         this.em = em;
         this.repo = repo;
         this.passwordEncoder = passwordEncoder;
+        this.trackingDAO = trackingDAO;
     }
 
 
@@ -109,17 +122,21 @@ public class UserServiceImpl extends GenericServiceImpl<User>
         return subQueryCountLineItem;
     }
 
+
+
+
     @Override
     public List<OrderSimpleDto> findAllOrder(String username, int start, int offset) {
         HibernateCriteriaBuilder builder = em.unwrap(Session.class).getCriteriaBuilder();
         JpaCriteriaQuery<OrderSimpleDto> mainQuery = builder.createQuery(OrderSimpleDto.class);
         var orderRoot = mainQuery.from(Order.class);
         // Joins
-        var userJoin = orderRoot.join("user");
-        var lineItemJoin = orderRoot.join(LineItem.class);
-        JpaJoin<LineItem, DetailProduct> detailProductJoin = lineItemJoin.join("detailProduct");
-        JpaJoin<DetailProduct, Product> productJoin = detailProductJoin.join("product");
-        JpaJoin<Size, DetailProduct> sizeJoin = detailProductJoin.join("size");
+        var userJoin = orderRoot.join(Order_.USER);
+        var lineItemJoin = orderRoot.join(Order_.LINE_ITEMS);
+
+        var detailProductJoin = lineItemJoin.join(LineItem_.DETAIL_PRODUCT);
+        var productJoin = detailProductJoin.join(DetailProduct_.PRODUCT);
+        var sizeJoin = detailProductJoin.join(DetailProduct_.SIZE);
 
         var subQueryCountLineItem = createSubQueryCalcSumLineItem(mainQuery, orderRoot, builder);
 
@@ -127,16 +144,15 @@ public class UserServiceImpl extends GenericServiceImpl<User>
         // join line_item l1 on l1.id = (select l2.id from line_item l2 where o.id = l2.order_id limit 1)
         var subQueryLimit = mainQuery.subquery(Long.class);
         var subLineItemRoot = subQueryLimit.from(LineItem.class);
-        subQueryLimit.select(subLineItemRoot.get("id"))
+        subQueryLimit.select(subLineItemRoot.get(LineItem_.ID))
                 .where(builder.equal(
-                                orderRoot.get("id")
-                                , subLineItemRoot.get("order").get("id")
+                                orderRoot.get(Order_.ID)
+                                , subLineItemRoot.get(LineItem_.ORDER).get("id")
                         )
                 ).fetch(1);
 
         lineItemJoin.on(builder.equal(
-                lineItemJoin.get("id")
-                , subQueryLimit
+                lineItemJoin.get(LineItem_.ID), subQueryLimit
         ));
 
         mainQuery.select(builder.construct(
@@ -176,37 +192,40 @@ public class UserServiceImpl extends GenericServiceImpl<User>
         HibernateCriteriaBuilder builder = em.unwrap(Session.class).getCriteriaBuilder();
         JpaCriteriaQuery<Tuple> mainQuery = builder.createTupleQuery();
         JpaRoot<Order> orderRoot = mainQuery.from(Order.class);
-        JpaJoin<Order, User> userRoot = orderRoot.join("user");
-        JpaJoin<Order, LineItem> lineItemJoin = orderRoot.join("lineItems");
-        JpaJoin<LineItem, DetailProduct> detailProductJoin = lineItemJoin.join("detailProduct");
-        JpaJoin<DetailProduct, Product> productJoin = detailProductJoin.join("product");
-        JpaJoin<DetailProduct, Size> sizeJoin = detailProductJoin.join("size");
+        var addressJoin = orderRoot.join(Order_.ADDRESS, JoinType.LEFT);
+        var userRoot = orderRoot.join(Order_.USER, JoinType.LEFT);
+        var paymentJoin = orderRoot.join(Order_.PAYMENT, JoinType.LEFT);
+        var shipmentJoin = orderRoot.join(Order_.SHIPMENT, JoinType.LEFT);
+        var lineItemJoin = orderRoot.join(Order_.LINE_ITEMS, JoinType.LEFT);
+
+        var detailProductJoin = lineItemJoin.join(LineItem_.DETAIL_PRODUCT);
+        var productJoin = detailProductJoin.join(DetailProduct_.PRODUCT);
+        var sizeJoin = detailProductJoin.join(DetailProduct_.SIZE);
 
         mainQuery
                 .multiselect(
-                        orderRoot.get("id").alias("orderId"),
-                        orderRoot.get("totalPriceBeforeDiscount").alias("totalBeforeDisc"),
-                        orderRoot.get("totalPriceAfterDiscount").alias("totalAfterDisc"),
-                        orderRoot.get("status").alias("status"),
-                        orderRoot.get("placedAt").alias("placedAt"),
-                        orderRoot.get("modifiedAt").alias("modifiedAt"),
-                        productJoin.get("id").alias("productId"),
-                        productJoin.get("name").alias("productName"),
-                        productJoin.get("picture").alias("productPicture"),
-                        sizeJoin.get("name").alias("sizeName"),
-                        lineItemJoin.get("amount").alias("amount"),
-                        lineItemJoin.get("quantity").alias("quantity"))
-                .where(builder.and(
+                        orderRoot.alias("order"),
+                        paymentJoin.alias("payment"),
+                        shipmentJoin.alias("shipment"),
+                        productJoin.alias("product"),
+                        sizeJoin.alias("size"),
+                        lineItemJoin.alias("lineItems"),
+                        addressJoin.alias("address"),
+                        userRoot.alias("user")
+                ).where(builder.and(
                         builder.equal(orderRoot.get("id"), id),
                         builder.equal(userRoot.get("username"), username)
                 ));
+
         List<Tuple> tuples = em.createQuery(mainQuery).getResultList();
-        tuples.forEach(System.out::println);
+
         OrderDetailDto orderDetailDto = new OrderDetailDto();
         if (!tuples.isEmpty()) {
             tuples.forEach(tuple -> {
+                System.out.println("info detail: " + tuple.toString());
                 orderDetailDto.setOrderId(tuple.get("orderId", UUID.class));
                 OrderDetailDto.LineItem lineItem = OrderDetailDto.LineItem.builder()
+                        .id(tuple.get("lineItemId", Long.class))
                         .productId(tuple.get("productId", Long.class))
                         .productName(tuple.get("productName", String.class))
                         .productPicture(tuple.get("productPicture", String.class))
@@ -215,7 +234,36 @@ public class UserServiceImpl extends GenericServiceImpl<User>
                         .quantity(tuple.get("quantity", Integer.class))
                         .build();
                 orderDetailDto.getLineItems().add(lineItem);
-                orderDetailDto.setStatus(tuple.get("status", Status.class));
+                OrderDetailDto.Address address = OrderDetailDto.Address.builder()
+                        .province(tuple.get("province", String.class))
+                        .district(tuple.get("district", String.class))
+                        .ward(tuple.get("ward", String.class))
+                        .detailAddress(tuple.get("detailAddress", String.class))
+                        .phoneNumber(tuple.get("phoneNumber", String.class))
+                        .fullname(tuple.get("fullname", String.class)).build();
+                orderDetailDto.setAddress(address);
+                OrderDetailDto.Shipment shipment = OrderDetailDto.Shipment.builder()
+                        .fee(tuple.get("fee", Integer.class))
+                        .insuranceFee(tuple.get("insuranceFee", Integer.class))
+                        .labelCode(tuple.get("labelCode", String.class)).build();
+                orderDetailDto.setShipment(shipment);
+
+                // get tracking
+                try {
+                    List<Tracking> trackings = trackingDAO
+                            .findAllTrackingByShipmentId(tuple.get("shipmentId", Long.class));
+                    List<OrderDetailDto.Tracking> trackingDto = trackings.stream().map(tracking -> OrderDetailDto.Tracking.builder()
+                            .statusNumber(tracking.getStatusNumber())
+                            .statusText(tracking.getStatusText())
+                            .date(tracking.getDate()).build())
+                            .toList();
+                    orderDetailDto.setTrackings(trackingDto);
+                } catch (NoResultException ex) {
+                    System.out.println(ex.getMessage());
+                }
+
+                orderDetailDto.setCurrentStatus(tuple.get("currentStatus", Status.class));
+                orderDetailDto.setPaymentMethod(tuple.get("paymentMethod", Payment.PaymentMethod.class));
                 orderDetailDto.setTotalPriceBeforeDiscount(tuple.get("totalBeforeDisc", Integer.class));
                 orderDetailDto.setTotalPriceAfterDiscount(tuple.get("totalAfterDisc", Integer.class));
                 orderDetailDto.setPlacedAt(tuple.get("placedAt", LocalDateTime.class));

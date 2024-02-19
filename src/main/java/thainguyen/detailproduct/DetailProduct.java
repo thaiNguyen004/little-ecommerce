@@ -29,11 +29,11 @@ public class DetailProduct {
     @JsonIgnore
     private Long version;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @NotNull(message = "size attribute must not be null")
     private Size size;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @NotNull(message = "product attribute must not be null")
     private Product product;
 

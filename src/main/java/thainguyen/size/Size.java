@@ -23,11 +23,11 @@ public class Size {
     @Version
     private Long version;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @NotNull(message = "brand of size must not be null")
     private Brand brand;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @NotNull(message = "category of size must not be null")
     private Category category;
 

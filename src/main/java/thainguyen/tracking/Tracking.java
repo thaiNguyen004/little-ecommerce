@@ -19,10 +19,9 @@ public class Tracking {
     @GeneratedValue(generator = SEQUENCE_GENERATOR)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Shipment shipment;
-    private String status;
-    private LocalDateTime createdAt;
-    private LocalDateTime modifiedAt;
-
+    private Long statusNumber;
+    private String statusText;
+    private LocalDateTime date;
 }
