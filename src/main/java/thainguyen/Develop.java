@@ -159,7 +159,7 @@ public class Develop {
             orderRepo.save(order1);
 
             Payment payment = new Payment();
-            payment.setAmount(new Price(BigDecimal.valueOf(100000), Currency.getInstance("VND")));
+            payment.setAmount(100000);
             payment.setPaymentMethod(Payment.PaymentMethod.CAST);
             payment.setStatus(Status.SUCCESS);
             payment.setOrder(order1);

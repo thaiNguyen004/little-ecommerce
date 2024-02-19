@@ -31,12 +31,12 @@ public class Product {
     @JsonIgnore
     private Long version;
 
-    @ManyToOne
-    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @NotNull(message = "category attribute must not be null")
     private Category category;
 
-    @ManyToOne
-    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @NotNull(message = "brand attribute must not be null")
     private Brand brand;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "product")
