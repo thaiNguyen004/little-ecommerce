@@ -8,18 +8,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
-import thainguyen.order.OrderDetailDto;
 import thainguyen.utility.core.ResponseComponent;
-import thainguyen.order.OrderSimpleDto;
 import thainguyen.utility.mapping.ObjectMapperUtil;
 import thainguyen.utility.validation.ValidateUtil;
 
 import java.net.URI;
-import java.security.Principal;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/api/users", produces = "application/json")
@@ -89,30 +85,4 @@ public class UserController {
         return new ResponseEntity<>(response, response.getStatus());
     }
 
-    @GetMapping(value = "/orders")
-    private ResponseEntity<ResponseComponent<List<OrderSimpleDto>>> findAllOrderOwn(Principal principal) {
-        List<OrderSimpleDto> ordersOwn = service.findAllOrder(principal.getName(), 0, 1);
-        ResponseComponent<List<OrderSimpleDto>> response = ResponseComponent
-                .<List<OrderSimpleDto>>builder()
-                .success(true)
-                .status(HttpStatus.OK)
-                .data(ordersOwn)
-                .build();
-        return new ResponseEntity<>(response, response.getStatus());
-    }
-
-    @GetMapping(value = "/orders/{id}")
-    private ResponseEntity<ResponseComponent<OrderDetailDto>> findOrderByUsernameAndOrderId(
-            @PathVariable UUID id, Principal principal
-    ) {
-        System.out.println("dda vao");
-        var orderDetailDto = service.findOrderById(id, principal.getName());
-        ResponseComponent<OrderDetailDto> response = ResponseComponent
-                .<OrderDetailDto>builder()
-                .success(true)
-                .status(HttpStatus.OK)
-                .data(orderDetailDto)
-                .build();
-        return new ResponseEntity<>(response, response.getStatus());
-    }
 }
